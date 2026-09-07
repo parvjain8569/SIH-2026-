@@ -85,17 +85,42 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
 
   return (
     <div>
-      {/* Sub-tab Navigation */}
+      {/* Sub-tab Navigation with realistic SVGs */}
       <div className="settings-subtabs">
-        {['email', 'phone', 'password'].map((tab) => (
-          <button
-            key={tab}
-            className={`settings-subtab-btn ${subTab === tab ? 'active' : ''}`}
-            onClick={() => switchSubTab(tab)}
-          >
-            {tab === 'email' ? '📧 Change Email' : tab === 'phone' ? '📱 Change Number' : '🔑 Change Password'}
-          </button>
-        ))}
+        <button
+          className={`settings-subtab-btn ${subTab === 'email' ? 'active' : ''}`}
+          onClick={() => switchSubTab('email')}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <rect width="20" height="16" x="2" y="4" rx="2" />
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
+          </svg>
+          <span>Change Email</span>
+        </button>
+
+        <button
+          className={`settings-subtab-btn ${subTab === 'phone' ? 'active' : ''}`}
+          onClick={() => switchSubTab('phone')}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
+            <path d="M12 18h.01" />
+          </svg>
+          <span>Change Number</span>
+        </button>
+
+        <button
+          className={`settings-subtab-btn ${subTab === 'password' ? 'active' : ''}`}
+          onClick={() => switchSubTab('password')}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="7.5" cy="15.5" r="5.5" />
+            <path d="M12 11l8-8" />
+            <path d="M17 3l4 4" />
+            <path d="M14 6l2 2" />
+          </svg>
+          <span>Change Password</span>
+        </button>
       </div>
 
       <div className="settings-card">
@@ -252,7 +277,7 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
                 Back
               </button>
               <button className="btn-upload-primary" onClick={handleVerifyOtp}>
-                Verify OTP & Update
+                Verify OTP &amp; Update
               </button>
             </div>
           </div>
@@ -261,8 +286,24 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
         {/* STEP 3: Success Confirmation */}
         {step === 3 && (
           <div style={{ textAlign: 'center', padding: '20px 0' }}>
-            <div style={{ fontSize: '42px', marginBottom: '12px' }}>🎉</div>
-            <h4 style={{ fontSize: '18px', margin: '0 0 8px 0', color: '#15803d' }}>
+            <div
+              style={{
+                width: '56px',
+                height: '56px',
+                borderRadius: '50%',
+                backgroundColor: '#ecfdf5',
+                color: '#16a34a',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 14px',
+              }}
+            >
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="20 6 9 17 4 12" />
+              </svg>
+            </div>
+            <h4 style={{ fontSize: '18px', margin: '0 0 8px 0', color: '#15803d', fontWeight: 800 }}>
               Verification Successful!
             </h4>
             <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '20px' }}>
