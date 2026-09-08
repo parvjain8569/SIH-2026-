@@ -53,10 +53,13 @@
 .bhoomi-logo-trigger {
   display: flex;
   align-items: center;
-  gap: 11px;
+  gap: 12px;
   cursor: pointer;
   text-decoration: none;
   user-select: none;
+  padding: 6px 10px;
+  border-radius: 10px;
+  transition: background-color 0.15s ease;
 }
 
 .bhoomi-sprout-icon {
@@ -934,9 +937,9 @@
 .steps-brand-tag {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 5px 14px;
-  border-radius: 20px;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 22px;
   background-color: #ffffff;
   border: 1px solid #a7f3d0;
   box-shadow: 0 2px 6px rgba(22, 101, 52, 0.05);
@@ -944,16 +947,15 @@
 }
 
 .steps-brand-tag-icon {
-  height: 20px;
-  width: auto;
-  max-width: 24px;
+  height: 22px;
+  width: 22px;
   object-fit: contain;
-  mix-blend-mode: multiply;
   display: block;
+  flex-shrink: 0;
 }
 
 .steps-brand-tag-text {
-  font-size: 13px;
+  font-size: 14.5px;
   font-weight: 800;
   color: #166534;
   letter-spacing: -0.2px;
@@ -1399,6 +1401,9 @@
 }
 
 .bhoomi-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   font-size: 15px;
   font-weight: 800;
   color: var(--text-dark);
@@ -1535,17 +1540,7 @@
    LOGO DRAWER MENU (Profile, Notifications, Settings, Help Center, About Us)
    ========================================================================== */
 
-.bhoomi-logo-trigger {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  padding: 6px 10px;
-  border-radius: 10px;
-  transition: background-color 0.15s ease;
-  user-select: none;
-}
-
+/* .bhoomi-logo-trigger already defined above — hover below */
 .bhoomi-logo-trigger:hover {
   background-color: #f1f5f9;
 }
@@ -2642,113 +2637,123 @@
   animation: pulseMarkerRing 2s cubic-bezier(0.24, 0, 0.38, 1) infinite;
 }
 
-/* Official Logo & Wordmark Styling (SS 1 & SS 2) */
+/* ===================================================
+   OFFICIAL LOGO & WORDMARK STYLING — Design System
+   Sized to match YouTube / Gemini / Anikoto level
+   prominence. Brand should be instantly recognizable.
+   =================================================== */
+
+/* ── NAVBAR: Primary brand lockup (icon + wordmark) ── */
 .bhoomi-brand-icon {
-  height: 40px;
-  width: auto;
-  max-width: 48px;
+  height: 42px;
+  width: 42px;
   object-fit: contain;
-  mix-blend-mode: multiply;
   display: block;
-  transition: transform 0.15s ease;
+  flex-shrink: 0;
+  transition: transform 0.18s ease;
 }
 
 .bhoomi-brand-wordmark {
-  height: 26px;
+  height: 30px;
   width: auto;
-  max-width: 155px;
   object-fit: contain;
-  mix-blend-mode: multiply;
   display: block;
+  flex-shrink: 0;
 }
 
 .bhoomi-logo-trigger:hover .bhoomi-brand-icon {
-  transform: scale(1.05);
+  transform: scale(1.06) rotate(-2deg);
 }
 
+/* ── HERO PILL: Small inline brand tag ── */
 .hero-pill-brand-icon {
-  height: 18px;
-  width: auto;
+  height: 20px;
+  width: 20px;
   object-fit: contain;
-  mix-blend-mode: multiply;
   display: block;
+  flex-shrink: 0;
 }
 
+/* ── DIGITAL CARD HEADER: Processed card brand icon ── */
 .digital-header-brand-icon {
   height: 24px;
-  width: auto;
+  width: 24px;
   object-fit: contain;
-  mix-blend-mode: multiply;
   display: block;
+  flex-shrink: 0;
 }
 
+/* ── DRAWER: Side panel brand lockup ── */
 .bhoomi-drawer-icon {
-  height: 32px;
-  width: auto;
+  height: 36px;
+  width: 36px;
   object-fit: contain;
-  mix-blend-mode: multiply;
   display: block;
+  flex-shrink: 0;
 }
 
 .bhoomi-drawer-wordmark {
-  height: 20px;
+  height: 22px;
   width: auto;
   object-fit: contain;
-  mix-blend-mode: multiply;
   display: block;
+  flex-shrink: 0;
 }
 
 .bhoomi-drawer-divider {
   color: #cbd5e1;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 300;
-  margin: 0 4px;
+  margin: 0 8px;
+  line-height: 1;
 }
 
+/* ── FOOTER: Bottom bar brand lockup ── */
 .bhoomi-footer-brand-wrap {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .bhoomi-footer-icon {
-  height: 28px;
-  width: auto;
+  height: 32px;
+  width: 32px;
   object-fit: contain;
-  mix-blend-mode: multiply;
   display: block;
+  flex-shrink: 0;
 }
 
 .bhoomi-footer-wordmark {
-  height: 19px;
+  height: 22px;
   width: auto;
   object-fit: contain;
-  mix-blend-mode: multiply;
   display: block;
+  flex-shrink: 0;
 }
 
+/* ── AUTH / LOGIN: Centered brand hero ── */
 .auth-card-logo-wrap {
   display: flex;
   justify-content: center;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
+  gap: 14px;
+  margin-bottom: 24px;
 }
 
 .auth-brand-icon {
-  height: 44px;
-  width: auto;
+  height: 52px;
+  width: 52px;
   object-fit: contain;
-  mix-blend-mode: multiply;
   display: block;
+  flex-shrink: 0;
 }
 
 .auth-brand-wordmark {
-  height: 28px;
+  height: 34px;
   width: auto;
   object-fit: contain;
-  mix-blend-mode: multiply;
   display: block;
+  flex-shrink: 0;
 }
 
 /* ===================================================
