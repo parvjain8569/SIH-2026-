@@ -18,6 +18,7 @@ import MenuDrawer           from './components/drawer/MenuDrawer'
 // ── Modals ─────────────────────────────────────────────────────
 import AuthRequiredModal    from './components/modals/AuthRequiredModal'
 import RecordDetailsModal   from './components/modals/RecordDetailsModal'
+import UploadWizardModal    from './components/modals/UploadWizardModal'
 
 // ── Initial Sample Records for Demo Registry ───────────────────
 const INITIAL_RECORDS = [
@@ -86,9 +87,9 @@ export default function Website({ user, onLogout, onOpenLogin }) {
   const [selectedRecordForModal, setSelectedRecordForModal]= useState(null)
   const [showModal,              setShowModal]             = useState(false)
   const [showAuthPromptModal,    setShowAuthPromptModal]   = useState(false)
+  const [showUploadWizard,       setShowUploadWizard]      = useState(false)
 
   const stepsRef     = useRef(null)
-  const fileInputRef = useRef(null)
 
   // ── Navigation helpers ──────────────────────────────────────────────────────
   const scrollToSection = (sectionId) => {
@@ -123,13 +124,13 @@ export default function Website({ user, onLogout, onOpenLogin }) {
       return
     }
 
-    // 3. All verifications pass -> open system file picker
+    // 3. All verifications pass -> open Upload Wizard
     setVerificationAlert(false)
-    fileInputRef.current?.click()
+    setShowUploadWizard(true)
   }
 
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0]
+  const handleWizardComplete = (file) => {
+    setShowUploadWizard(false)
     if (!file) return
 
     const sizeStr = file.size > 1024 * 1024
@@ -194,15 +195,6 @@ export default function Website({ user, onLogout, onOpenLogin }) {
   return (
     <div className="bhoomi-container">
 
-      {/* Hidden file input — real OS folder picker for land documents */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
-        style={{ display: 'none' }}
-      />
-
       {/* ── Navigation Bar ── */}
       <Navbar
         user={user}
@@ -245,6 +237,14 @@ export default function Website({ user, onLogout, onOpenLogin }) {
             setShowAuthPromptModal(false)
             onOpenLogin && onOpenLogin('signin')
           }}
+        />
+      )}
+
+      {/* ── UPLOAD WIZARD MODAL ── */}
+      {showUploadWizard && (
+        <UploadWizardModal
+          onClose={() => setShowUploadWizard(false)}
+          onComplete={handleWizardComplete}
         />
       )}
 
