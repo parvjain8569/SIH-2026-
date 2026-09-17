@@ -1,3 +1,6 @@
+import React from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
+
 // HeroSection: Modern split-screen layout matching the user's BhoomIntelli design
 // Left: Headings, CTAs, trust badges
 // Right: Visual comparison of vintage paper document -> verified digital structured card
@@ -9,6 +12,7 @@ export default function HeroSection({
   onViewRecords
 }) {
   const sampleOwnerName = user?.name || 'Ramesh Kumar'
+  const { t } = useLanguage()
 
   return (
     <section className="bhoomi-hero-v2">
@@ -25,10 +29,10 @@ export default function HeroSection({
 
           {/* Hero Headline */}
           <h1 className="bhoomi-hero-title-v2">
-            Turn Your Land Documents
+            {t('hero.title.part1')}
             <br />
             <span className="bhoomi-title-highlight">
-              Into Verified Digital Records
+              {t('hero.title.part2')}
               <svg className="bhoomi-curve-underline" viewBox="0 0 420 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M3 13C120 4 280 4 417 14" stroke="#16a34a" strokeWidth="4" strokeLinecap="round" />
               </svg>
@@ -37,8 +41,7 @@ export default function HeroSection({
 
           {/* Subtitle */}
           <p className="bhoomi-hero-subtitle-v2">
-            Upload your land document and let BhoomIntelli extract, validate and
-            organize the information for you.
+            {t('hero.subtitle')}
           </p>
 
           {/* Active Upload Banner if doc was picked */}
@@ -70,8 +73,8 @@ export default function HeroSection({
                 <path d="M12 12v9" />
                 <path d="m8 16 4-4 4 4" />
               </svg>
-              <span>Upload Land Document</span>
-              <span className="bhoomi-btn-arrow">→</span>
+              <span>{t('hero.btn.upload')}</span>
+              <span className="bhoomi-btn-arrow"></span>
             </button>
 
             <button className="bhoomi-btn-secondary-v2" onClick={onScrollToSteps}>
@@ -79,7 +82,7 @@ export default function HeroSection({
                 <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
                 <polygon points="10 8 16 12 10 16 10 8" />
               </svg>
-              <span>How It Works</span>
+              <span>{t('hero.btn.howItWorks')}</span>
             </button>
           </div>
 

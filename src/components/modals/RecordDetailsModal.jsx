@@ -1,3 +1,5 @@
+import { useLanguage } from '../../i18n/LanguageContext'
+
 export default function RecordDetailsModal({
   isOpen,
   onClose,
@@ -6,6 +8,7 @@ export default function RecordDetailsModal({
   selectedRecord,
   onNavigateToRecords,
 }) {
+  const { t } = useLanguage()
   if (!isOpen) return null
 
   return (
@@ -13,7 +16,7 @@ export default function RecordDetailsModal({
       <div className="bhoomi-modal" onClick={(e) => e.stopPropagation()}>
         <div className="bhoomi-modal-header">
           <h3 className="bhoomi-modal-title">
-            {isProcessing ? 'Validating Land Record...' : 'Record Digitized & Verified'}
+            {isProcessing ? t('recordDetails.processingTitle') : t('recordDetails.verifiedTitle')}
           </h3>
           {!isProcessing && (
             <button className="bhoomi-modal-close" onClick={onClose} aria-label="Close modal">
@@ -38,10 +41,10 @@ export default function RecordDetailsModal({
             <style>{`@keyframes spin { 100% { transform: rotate(360deg); } }`}</style>
             <div>
               <div style={{ fontWeight: 700, fontSize: '14.5px', color: '#111827' }}>
-                Reading {lastUploadedDoc?.name}
+                {t('recordDetails.reading')} {lastUploadedDoc?.name}
               </div>
               <div style={{ fontSize: '13px', color: '#4b5563' }}>
-                Extracting cadastral survey map & registry seal...
+                {t('recordDetails.extracting')}
               </div>
             </div>
           </div>
@@ -84,8 +87,8 @@ export default function RecordDetailsModal({
                   }}
                 >
                   {selectedRecord?.status === 'Verified'
-                    ? 'Official Registry Verified'
-                    : 'Manual Review Pending'}
+                    ? t('recordDetails.verifiedStatus')
+                    : t('recordDetails.pendingStatus')}
                 </div>
                 <div
                   style={{
@@ -94,8 +97,8 @@ export default function RecordDetailsModal({
                   }}
                 >
                   {selectedRecord?.status === 'Verified'
-                    ? 'Cryptographic digital hash verified against state land records database.'
-                    : 'Discrepancy detected in boundary survey. Scheduled for officer review.'}
+                    ? t('recordDetails.verifiedDesc')
+                    : t('recordDetails.pendingDesc')}
                 </div>
               </div>
             </div>
@@ -103,31 +106,31 @@ export default function RecordDetailsModal({
             {selectedRecord && (
               <div className="bhoomi-doc-details">
                 <div className="bhoomi-doc-row">
-                  <span style={{ color: '#6b7280' }}>Document File:</span>
+                  <span style={{ color: '#6b7280' }}>{t('recordDetails.docFile')}:</span>
                   <strong style={{ color: '#111827' }}>
                     {selectedRecord.documentName || 'land_record.pdf'}
                   </strong>
                 </div>
                 <div className="bhoomi-doc-row">
-                  <span style={{ color: '#6b7280' }}>Owner Name:</span>
+                  <span style={{ color: '#6b7280' }}>{t('recordDetails.ownerName')}:</span>
                   <strong style={{ color: '#111827' }}>{selectedRecord.ownerName}</strong>
                 </div>
                 <div className="bhoomi-doc-row">
-                  <span style={{ color: '#6b7280' }}>Parcel ID:</span>
+                  <span style={{ color: '#6b7280' }}>{t('recordDetails.parcelId')}:</span>
                   <strong style={{ color: '#111827' }}>{selectedRecord.parcelId}</strong>
                 </div>
                 <div className="bhoomi-doc-row">
-                  <span style={{ color: '#6b7280' }}>Khasra / Plot No:</span>
+                  <span style={{ color: '#6b7280' }}>{t('recordDetails.khasra')}:</span>
                   <strong style={{ color: '#111827' }}>{selectedRecord.khasraNo}</strong>
                 </div>
                 <div className="bhoomi-doc-row">
-                  <span style={{ color: '#6b7280' }}>Location:</span>
+                  <span style={{ color: '#6b7280' }}>{t('recordDetails.location')}:</span>
                   <strong style={{ color: '#111827' }}>
                     {selectedRecord.district}, {selectedRecord.state}
                   </strong>
                 </div>
                 <div className="bhoomi-doc-row">
-                  <span style={{ color: '#6b7280' }}>Total Area:</span>
+                  <span style={{ color: '#6b7280' }}>{t('recordDetails.totalArea')}:</span>
                   <strong style={{ color: '#111827' }}>{selectedRecord.area}</strong>
                 </div>
               </div>
@@ -138,11 +141,11 @@ export default function RecordDetailsModal({
                 className="btn-upload-primary"
                 style={{ flex: 1, justifyContent: 'center' }}
                 onClick={() => {
-                  alert(`Verified Digital Certificate (${selectedRecord?.parcelId}) downloaded!`)
+                  alert(t('recordDetails.downloadAlert').replace('{id}', selectedRecord?.parcelId))
                   onClose()
                 }}
               >
-                Download Certificate
+                {t('recordDetails.downloadCert')}
               </button>
               <button
                 className="btn-how-it-works-downward"
@@ -151,7 +154,7 @@ export default function RecordDetailsModal({
                   if (onNavigateToRecords) onNavigateToRecords()
                 }}
               >
-                Go to My Records
+                {t('recordDetails.goRecords')}
               </button>
             </div>
           </div>

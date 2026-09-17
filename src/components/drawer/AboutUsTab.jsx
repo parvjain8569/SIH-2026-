@@ -1,9 +1,10 @@
 // AboutUsTab: Project overview, core tech pillars, and dynamic changelog
 // ⚠️  Always update VERSION and CHANGELOG when new features are added
+import { useLanguage } from '../../i18n/LanguageContext'
 const VERSION = 'v2.4.0'
 const RELEASE_DATE = 'SIH 2026 Edition'
 
-const TECH_PILLARS = [
+const getTechPillars = (t) => [
   {
     icon: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#166534" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
@@ -15,8 +16,8 @@ const TECH_PILLARS = [
       </svg>
     ),
     iconBg: '#ecfdf5',
-    title: 'Multilingual OCR',
-    desc: 'Parses regional Khasra, Khatauni, and Jamabandi scripts with high accuracy.',
+    title: t('about.pillar1Title'),
+    desc: t('about.pillar1Desc'),
   },
   {
     icon: (
@@ -27,8 +28,8 @@ const TECH_PILLARS = [
       </svg>
     ),
     iconBg: '#eff6ff',
-    title: 'Cadastral GIS Alignment',
-    desc: 'Instantly maps extracted polygon coordinates directly onto village survey plans.',
+    title: t('about.pillar2Title'),
+    desc: t('about.pillar2Desc'),
   },
   {
     icon: (
@@ -38,8 +39,8 @@ const TECH_PILLARS = [
       </svg>
     ),
     iconBg: '#ecfdf5',
-    title: 'Cryptographic Seal',
-    desc: 'Digital certificate timestamping prevents duplicate registry tampering.',
+    title: t('about.pillar3Title'),
+    desc: t('about.pillar3Desc'),
   },
   {
     icon: (
@@ -50,61 +51,61 @@ const TECH_PILLARS = [
       </svg>
     ),
     iconBg: '#fffbeb',
-    title: 'Two-Factor OTP Security',
-    desc: 'Protects landholder identity with multi-channel authentication.',
+    title: t('about.pillar4Title'),
+    desc: t('about.pillar4Desc'),
   },
 ]
 
-const CHANGELOG = [
+const getChangelog = (t) => [
   {
-    title: 'Modular Component Architecture:',
-    desc: 'Codebase split into focused, single-responsibility components for maintainability.',
+    title: t('about.changelog1Title'),
+    desc: t('about.changelog1Desc'),
   },
   {
-    title: 'Logo Drawer System:',
-    desc: 'Integrated quick-access drawer for Profile, Notifications, Settings, Help Center, and About Us.',
+    title: t('about.changelog2Title'),
+    desc: t('about.changelog2Desc'),
   },
   {
-    title: 'Secure Profile & OTP Engine:',
-    desc: 'Lock protection on critical identifiers with interactive 6-digit OTP verification.',
+    title: t('about.changelog3Title'),
+    desc: t('about.changelog3Desc'),
   },
   {
-    title: 'Real Folder Document Ingestion:',
-    desc: 'Native file dialog integration with live file name badge & instant digitization.',
+    title: t('about.changelog4Title'),
+    desc: t('about.changelog4Desc'),
   },
   {
-    title: 'My Records Portal:',
-    desc: 'Full registry ledger matching BhoomIntelli portal specifications with instant certificate viewer.',
+    title: t('about.changelog5Title'),
+    desc: t('about.changelog5Desc'),
   },
   {
-    title: 'Responsive UI Architecture:',
-    desc: 'Clean contrast styling optimized for government portal accessibility standards.',
+    title: t('about.changelog6Title'),
+    desc: t('about.changelog6Desc'),
   },
 ]
 
 export default function AboutUsTab() {
+  const { t } = useLanguage()
+  const techPillars = getTechPillars(t)
+  const changelog = getChangelog(t)
   return (
     <div>
       {/* Hero Box */}
       <div className="about-hero-box">
-        <span className="about-version-tag">{VERSION} · {RELEASE_DATE}</span>
+        <span className="about-version-tag">{VERSION} · {t('about.releaseDate')}</span>
         <h3 style={{ margin: '0 0 10px 0', fontSize: '22px', fontWeight: 800 }}>
-          BhoomIntelli: Intelligent Land Record Digitization &amp; Validation System
+          {t('about.title')}
         </h3>
         <p style={{ margin: 0, fontSize: '14px', lineHeight: '1.6', opacity: 0.95 }}>
-          BhoomIntelli is a national-scale digital infrastructure platform designed to bridge
-          traditional paper land registries with modern, tamper-proof digital property
-          ecosystems through AI OCR extraction, GIS spatial boundary alignment, and
-          blockchain cryptographic auditing.
+          {t('about.subtitle')}
         </p>
       </div>
 
       {/* Core Tech Pillars */}
       <h4 style={{ margin: '0 0 14px 0', fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
-        Core Technology Pillars
+        {t('about.techPillars')}
       </h4>
       <div className="about-features-grid">
-        {TECH_PILLARS.map((p) => (
+        {techPillars.map((p) => (
           <div key={p.title} className="about-feature-card">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
               <div
@@ -152,15 +153,15 @@ export default function AboutUsTab() {
               </svg>
             </div>
             <strong style={{ fontSize: '15px', color: '#0f172a' }}>
-              Project Release History &amp; Updates
+              {t('about.changelogTitle')}
             </strong>
           </div>
           <span style={{ fontSize: '12px', background: '#dcfce7', color: '#15803d', padding: '3px 10px', borderRadius: '12px', fontWeight: 700 }}>
-            Current Release: {VERSION}
+            {t('about.currentRelease')}: {VERSION}
           </span>
         </div>
         <ul style={{ margin: 0, paddingLeft: '18px', fontSize: '13.5px', color: '#4b5563', lineHeight: '1.8' }}>
-          {CHANGELOG.map((item) => (
+          {changelog.map((item) => (
             <li key={item.title}>
               <strong style={{ color: '#1e293b' }}>{item.title}</strong> {item.desc}
             </li>

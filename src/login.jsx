@@ -1,10 +1,12 @@
 import { useState } from 'react'
 import './login.css'
 import { extractCleanUsername, formatDisplayName } from './utils/userUtils'
+import { useLanguage } from './i18n/LanguageContext'
 
 export default function Login({ onLoginSuccess, onBackToWebsite, initialView = 'create' }) {
   // Views: 'create' | 'otp' | 'signin' | 'forgot_email' | 'forgot_otp' | 'forgot_reset'
   const [view, setView] = useState(initialView)
+  const { t } = useLanguage()
 
   // Registration & Sign-in form state
   const [formData, setFormData] = useState({
@@ -175,7 +177,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
         {/* Back to main website link */}
         {onBackToWebsite && (
           <button type="button" className="auth-back-link" onClick={onBackToWebsite}>
-            ← Back to BhoomIntelli Website
+            {t('login.backToWebsiteLink')}
           </button>
         )}
 
@@ -190,8 +192,8 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
             ============================================================ */}
         {view === 'create' && (
           <div>
-            <h1 className="auth-title">Create an Account</h1>
-            <p className="auth-subtitle">Set up your workspace to get started.</p>
+            <h1 className="auth-title">{t('login.createAccountTitle')}</h1>
+            <p className="auth-subtitle">{t('login.createAccountSubtitle')}</p>
 
             {error && <div className="auth-alert auth-alert-error">{error}</div>}
             {success && <div className="auth-alert auth-alert-success">{success}</div>}
@@ -199,14 +201,14 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
             <form className="auth-form" onSubmit={handleCreateAccount}>
               <div className="auth-form-group">
                 <label className="auth-label" htmlFor="name">
-                  Name
+                  {t('login.nameLabel')}
                 </label>
                 <input
                   id="name"
                   type="text"
                   name="name"
                   className="auth-input"
-                  placeholder="e.g. Ramesh"
+                  placeholder={t('login.namePlaceholder')}
                   value={formData.name}
                   onChange={handleChange}
                   autoComplete="given-name"
@@ -216,14 +218,14 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
 
               <div className="auth-form-group">
                 <label className="auth-label" htmlFor="surname">
-                  Surname
+                  {t('login.surnameLabel')}
                 </label>
                 <input
                   id="surname"
                   type="text"
                   name="surname"
                   className="auth-input"
-                  placeholder="e.g. Kumar"
+                  placeholder={t('login.surnamePlaceholder')}
                   value={formData.surname}
                   onChange={handleChange}
                   autoComplete="family-name"
@@ -233,14 +235,14 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
 
               <div className="auth-form-group">
                 <label className="auth-label" htmlFor="email">
-                  Email Address
+                  {t('login.emailLabel')}
                 </label>
                 <input
                   id="email"
                   type="email"
                   name="email"
                   className="auth-input"
-                  placeholder="name@example.com"
+                  placeholder={t('login.emailPlaceholder')}
                   value={formData.email}
                   onChange={handleChange}
                   autoComplete="email"
@@ -251,14 +253,14 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
               {/* ONLY PASSWORD */}
               <div className="auth-form-group">
                 <label className="auth-label" htmlFor="password">
-                  Password
+                  {t('login.passwordLabel')}
                 </label>
                 <input
                   id="password"
                   type="password"
                   name="password"
                   className="auth-input"
-                  placeholder="Enter password (min 6 chars)"
+                  placeholder={t('login.passwordPlaceholder')}
                   value={formData.password}
                   onChange={handleChange}
                   autoComplete="new-password"
@@ -267,12 +269,12 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
               </div>
 
               <button type="submit" className="auth-btn-primary">
-                Create Account &amp; Send OTP
+                {t('login.createAccountBtn')}
               </button>
             </form>
 
             <div className="auth-footer">
-              Already have an account?{' '}
+              {t('login.alreadyHaveAccount')}{' '}
               <button
                 type="button"
                 className="auth-link"
@@ -282,7 +284,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                   setView('signin')
                 }}
               >
-                Log in
+                {t('login.logInLink')}
               </button>
             </div>
           </div>
@@ -300,9 +302,9 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
               </svg>
             </div>
 
-            <h1 className="auth-title">Verify Your Email</h1>
+            <h1 className="auth-title">{t('login.verifyEmailTitle')}</h1>
             <p className="auth-subtitle">
-              We have sent a 6-digit OTP verification code to{' '}
+              {t('login.verifyEmailSubtitle1')}{' '}
               <strong style={{ color: '#0f172a' }}>{formData.email || 'your email'}</strong>.
             </p>
 
@@ -310,7 +312,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
             {success && <div className="auth-alert auth-alert-success">{success}</div>}
 
             <div className="auth-demo-otp-pill">
-              💡 Demo Verification OTP: <strong>{generatedOtp}</strong>
+              {t('login.demoVerifyOtp')} <strong>{generatedOtp}</strong>
             </div>
 
             <form onSubmit={handleVerifyOtp}>
@@ -343,18 +345,18 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
               </div>
 
               <button type="submit" className="auth-btn-primary">
-                Verify OTP &amp; Continue to Sign In
+                {t('login.verifyOtpBtn')}
               </button>
             </form>
 
             <div className="auth-footer">
-              Didn&apos;t receive code?{' '}
+              {t('login.didntReceiveCode')}{' '}
               <button
                 type="button"
                 className="auth-link"
                 onClick={() => setSuccess(`New OTP code sent to ${formData.email}`)}
               >
-                Resend OTP
+                {t('login.resendOtp')}
               </button>
               <br />
               <button
@@ -363,7 +365,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                 style={{ marginTop: '8px', display: 'inline-block' }}
                 onClick={() => setView('create')}
               >
-                ← Edit email address
+                {t('login.editEmailLink')}
               </button>
             </div>
           </div>
@@ -374,12 +376,8 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
             ============================================================ */}
         {view === 'signin' && (
           <div>
-            <h1 className="auth-title">Sign In</h1>
-            <p className="auth-subtitle">
-              Welcome back. Please sign in to your
-              <br />
-              BhoomIntelli workspace.
-            </p>
+            <h1 className="auth-title">{t('login.signInTitle')}</h1>
+            <p className="auth-subtitle" dangerouslySetInnerHTML={{ __html: t('login.signInSubtitle') }} />
 
             {error && <div className="auth-alert auth-alert-error">{error}</div>}
             {success && <div className="auth-alert auth-alert-success">{success}</div>}
@@ -387,7 +385,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
             <form className="auth-form" onSubmit={handleSignIn}>
               <div className="auth-form-group">
                 <label className="auth-label" htmlFor="signin-email">
-                  Email Address
+                  {t('login.emailLabel')}
                 </label>
                 <input
                   id="signin-email"
@@ -396,7 +394,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                   className="auth-input"
                   value={formData.email}
                   onChange={handleChange}
-                  placeholder="name@example.com"
+                  placeholder={t('login.emailPlaceholder')}
                   autoComplete="email"
                   required
                 />
@@ -405,7 +403,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
               <div className="auth-form-group">
                 <div className="auth-label-row">
                   <label className="auth-label" htmlFor="signin-password">
-                    Password
+                    {t('login.passwordLabel')}
                   </label>
                   <button
                     type="button"
@@ -417,7 +415,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                       setView('forgot_email')
                     }}
                   >
-                    Forgot Password?
+                    {t('login.forgotPasswordLink')}
                   </button>
                 </div>
                 <input
@@ -425,7 +423,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                   type="password"
                   name="password"
                   className="auth-input"
-                  placeholder="Enter your password"
+                  placeholder={t('login.signInPasswordPlaceholder')}
                   value={formData.password}
                   onChange={handleChange}
                   autoComplete="current-password"
@@ -434,12 +432,12 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
               </div>
 
               <button type="submit" className="auth-btn-primary">
-                Sign In to Workspace
+                {t('login.signInBtn')}
               </button>
             </form>
 
             <div className="auth-footer">
-              Need an account?{' '}
+              {t('login.needAccount')}{' '}
               <button
                 type="button"
                 className="auth-link"
@@ -449,7 +447,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                   setView('create')
                 }}
               >
-                Create a new account
+                {t('login.createNewAccountLink')}
               </button>
             </div>
           </div>
@@ -467,9 +465,9 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
               </svg>
             </div>
 
-            <h1 className="auth-title">Reset Password</h1>
+            <h1 className="auth-title">{t('login.resetPasswordTitle')}</h1>
             <p className="auth-subtitle">
-              Enter your registered email address and we will send a 6-digit OTP code to verify your identity.
+              {t('login.resetPasswordSubtitle')}
             </p>
 
             {error && <div className="auth-alert auth-alert-error">{error}</div>}
@@ -478,13 +476,13 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
             <form className="auth-form" onSubmit={handleSendForgotOtp}>
               <div className="auth-form-group">
                 <label className="auth-label" htmlFor="forgot-email">
-                  Registered Email Address
+                  {t('login.registeredEmailLabel')}
                 </label>
                 <input
                   id="forgot-email"
                   type="email"
                   className="auth-input"
-                  placeholder="name@example.com"
+                  placeholder={t('login.emailPlaceholder')}
                   value={forgotEmail}
                   onChange={(e) => {
                     setForgotEmail(e.target.value)
@@ -496,12 +494,12 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
               </div>
 
               <button type="submit" className="auth-btn-primary">
-                Send Reset OTP →
+                {t('login.sendResetOtpBtn')}
               </button>
             </form>
 
             <div className="auth-footer">
-              Remember your password?{' '}
+              {t('login.rememberPassword')}{' '}
               <button
                 type="button"
                 className="auth-link"
@@ -511,7 +509,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                   setView('signin')
                 }}
               >
-                Back to Sign In
+                {t('login.backToSignInLink')}
               </button>
             </div>
           </div>
@@ -529,9 +527,9 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
               </svg>
             </div>
 
-            <h1 className="auth-title">Verify Reset Code</h1>
+            <h1 className="auth-title">{t('login.verifyResetCodeTitle')}</h1>
             <p className="auth-subtitle">
-              We sent a 6-digit password reset OTP to{' '}
+              {t('login.verifyResetCodeSubtitle1')}{' '}
               <strong style={{ color: '#0f172a' }}>{forgotEmail}</strong>.
             </p>
 
@@ -539,7 +537,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
             {success && <div className="auth-alert auth-alert-success">{success}</div>}
 
             <div className="auth-demo-otp-pill">
-              💡 Demo Reset OTP: <strong>{demoForgotOtp}</strong>
+              {t('login.demoResetOtp')} <strong>{demoForgotOtp}</strong>
             </div>
 
             <form onSubmit={handleVerifyForgotOtp}>
@@ -572,18 +570,18 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
               </div>
 
               <button type="submit" className="auth-btn-primary">
-                Verify OTP &amp; Proceed
+                {t('login.verifyOtpProceedBtn')}
               </button>
             </form>
 
             <div className="auth-footer">
-              Didn&apos;t receive code?{' '}
+              {t('login.didntReceiveCode')}{' '}
               <button
                 type="button"
                 className="auth-link"
                 onClick={() => setSuccess(`New reset OTP sent to ${forgotEmail}`)}
               >
-                Resend OTP
+                {t('login.resendOtp')}
               </button>
               <br />
               <button
@@ -596,7 +594,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                   setView('forgot_email')
                 }}
               >
-                ← Change email address
+                {t('login.changeEmailLink')}
               </button>
             </div>
           </div>
@@ -616,9 +614,9 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
               </svg>
             </div>
 
-            <h1 className="auth-title">Set New Password</h1>
+            <h1 className="auth-title">{t('login.setNewPasswordTitle')}</h1>
             <p className="auth-subtitle">
-              Create a new secure password for{' '}
+              {t('login.setNewPasswordSubtitle1')}{' '}
               <strong style={{ color: '#0f172a' }}>{forgotEmail}</strong>.
             </p>
 
@@ -628,13 +626,13 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
             <form className="auth-form" onSubmit={handleResetPassword}>
               <div className="auth-form-group">
                 <label className="auth-label" htmlFor="new-password">
-                  New Password
+                  {t('login.newPasswordLabel')}
                 </label>
                 <input
                   id="new-password"
                   type="password"
                   className="auth-input"
-                  placeholder="Enter new password (min 6 chars)"
+                  placeholder={t('login.newPasswordPlaceholder')}
                   value={newPassword}
                   onChange={(e) => {
                     setNewPassword(e.target.value)
@@ -647,13 +645,13 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
 
               <div className="auth-form-group">
                 <label className="auth-label" htmlFor="confirm-password">
-                  Confirm New Password
+                  {t('login.confirmNewPasswordLabel')}
                 </label>
                 <input
                   id="confirm-password"
                   type="password"
                   className="auth-input"
-                  placeholder="Re-enter your new password"
+                  placeholder={t('login.confirmNewPasswordPlaceholder')}
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value)
@@ -665,7 +663,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
               </div>
 
               <button type="submit" className="auth-btn-primary">
-                Change Password &amp; Sign In
+                {t('login.changePasswordSignInBtn')}
               </button>
             </form>
 
@@ -679,7 +677,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                   setView('signin')
                 }}
               >
-                ← Cancel and return to Sign In
+                {t('login.cancelReturnSignInLink')}
               </button>
             </div>
           </div>

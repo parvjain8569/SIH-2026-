@@ -3,12 +3,13 @@ import NotificationsTab from './NotificationsTab'
 import SettingsTab from './SettingsTab'
 import HelpCenterTab from './HelpCenterTab'
 import AboutUsTab from './AboutUsTab'
+import { useLanguage } from '../../i18n/LanguageContext'
 
 // Clean professional tab definitions with SVG icons (no emojis)
 const AUTH_TABS = [
   {
     id: 'profile',
-    label: 'Profile',
+    labelKey: 'drawer.profile',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
@@ -18,7 +19,7 @@ const AUTH_TABS = [
   },
   {
     id: 'notification',
-    label: 'Notifications',
+    labelKey: 'drawer.notifications',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
@@ -28,7 +29,7 @@ const AUTH_TABS = [
   },
   {
     id: 'settings',
-    label: 'Settings',
+    labelKey: 'drawer.settings',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="3" />
@@ -38,7 +39,7 @@ const AUTH_TABS = [
   },
   {
     id: 'help',
-    label: 'Help Center',
+    labelKey: 'drawer.helpCenter',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
@@ -49,7 +50,7 @@ const AUTH_TABS = [
   },
   {
     id: 'about',
-    label: 'About',
+    labelKey: 'drawer.about',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
@@ -64,7 +65,7 @@ const AUTH_TABS = [
 const GUEST_TABS = [
   {
     id: 'help',
-    label: 'Help Center',
+    labelKey: 'drawer.helpCenter',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
@@ -75,7 +76,7 @@ const GUEST_TABS = [
   },
   {
     id: 'about',
-    label: 'About BhoomIntelli',
+    labelKey: 'drawer.aboutBhoomi',
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10" />
@@ -99,17 +100,18 @@ export default function MenuDrawer({
   unreadCount,
   verificationAlert = false
 }) {
+  const { t } = useLanguage()
   const isGuest = !user
   const visibleTabs = isGuest ? GUEST_TABS : AUTH_TABS
 
   // Header Title based on active tab
   const getDrawerTitle = () => {
-    if (activeTab === 'help') return 'Help Center & Support'
-    if (activeTab === 'about') return 'About BhoomIntelli'
-    if (activeTab === 'profile') return 'Landholder Profile'
-    if (activeTab === 'notification') return 'Notifications'
-    if (activeTab === 'settings') return 'Settings'
-    return isGuest ? 'About BhoomIntelli' : 'BhoomIntelli Workspace'
+    if (activeTab === 'help') return t('drawer.helpCenterSupport')
+    if (activeTab === 'about') return t('drawer.aboutBhoomiTitle')
+    if (activeTab === 'profile') return t('drawer.profileTitle')
+    if (activeTab === 'notification') return t('drawer.notificationsTitle')
+    if (activeTab === 'settings') return t('drawer.settingsTitle')
+    return isGuest ? t('drawer.aboutBhoomiTitle') : t('drawer.workspaceTitle')
   }
 
   return (
@@ -146,7 +148,7 @@ export default function MenuDrawer({
               onClick={() => onTabChange(tab.id)}
             >
               <span className="tab-icon-wrap">{tab.icon}</span>
-              <span className="tab-label-text">{tab.label}</span>
+              <span className="tab-label-text">{t(tab.labelKey)}</span>
               {tab.id === 'notification' && unreadCount > 0 && (
                 <span className="bhoomi-tab-badge">{unreadCount}</span>
               )}

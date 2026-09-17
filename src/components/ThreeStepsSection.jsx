@@ -1,8 +1,11 @@
 import { forwardRef } from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
 
 // ThreeStepsSection: Pixel-accurate to SS 4 with White & Green project color theme,
 // giant faint step numbers, connector line, bottom illustrations, and trust pills.
 const ThreeStepsSection = forwardRef(function ThreeStepsSection(_, ref) {
+  const { t } = useLanguage()
+
   return (
     <section className="bhoomi-steps-section-v4" ref={ref} id="three-steps">
       {/* Soft crystal geometric background ambient */}
@@ -24,9 +27,9 @@ const ThreeStepsSection = forwardRef(function ThreeStepsSection(_, ref) {
             <span className="steps-brand-tag-text">BhoomIntelli</span>
           </div>
 
-          <h2 className="bhoomi-steps-title-v4">Three Simple Steps</h2>
+          <h2 className="bhoomi-steps-title-v4">{t('steps.title')}</h2>
           <p className="bhoomi-steps-subtitle-v4">
-            Get your property verified in minutes — secure, fast, and reliable
+            {t('steps.subtitle')}
           </p>
         </div>
 
@@ -52,9 +55,9 @@ const ThreeStepsSection = forwardRef(function ThreeStepsSection(_, ref) {
             </div>
 
             {/* Step Title & Description */}
-            <h3 className="step-card-title-v4">01 Upload</h3>
+            <h3 className="step-card-title-v4">{t('steps.step1.title')}</h3>
             <p className="step-card-desc-v4">
-              Securely upload your land document, title deed, or survey paperwork in PDF, JPG, or PNG
+              {t('steps.step1.desc')}
             </p>
 
             {/* Bottom Illustration: Hand holding document with upload cloud */}
@@ -94,9 +97,9 @@ const ThreeStepsSection = forwardRef(function ThreeStepsSection(_, ref) {
             </div>
 
             {/* Step Title & Description */}
-            <h3 className="step-card-title-v4">02 Verify</h3>
+            <h3 className="step-card-title-v4">{t('steps.step2.title')}</h3>
             <p className="step-card-desc-v4">
-              We use AI and official registry cross-checks to verify authenticity for accuracy and legitimacy
+              {t('steps.step2.desc')}
             </p>
 
             {/* Bottom Illustration: Checklist with inspection magnifying glass */}
@@ -147,9 +150,9 @@ const ThreeStepsSection = forwardRef(function ThreeStepsSection(_, ref) {
             </div>
 
             {/* Step Title & Description */}
-            <h3 className="step-card-title-v4">03 Get Digital Record</h3>
+            <h3 className="step-card-title-v4">{t('steps.step3.title')}</h3>
             <p className="step-card-desc-v4">
-              Receive your tamper-proof digital record with QR code and downloadable certificate instantly
+              {t('steps.step3.desc')}
             </p>
 
             {/* Bottom Illustration: Certificate with seal & QR code */}
@@ -189,14 +192,14 @@ const ThreeStepsSection = forwardRef(function ThreeStepsSection(_, ref) {
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               <polyline points="9 12 11 14 15 10" />
             </svg>
-            <span>Secure &amp; Encrypted</span>
+            <span>{t('steps.pill1')}</span>
           </div>
 
           <div className="step-feature-pill">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
               <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
             </svg>
-            <span>Fast Processing</span>
+            <span>{t('steps.pill2')}</span>
           </div>
 
           <div className="step-feature-pill">
@@ -204,7 +207,7 @@ const ThreeStepsSection = forwardRef(function ThreeStepsSection(_, ref) {
               <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
               <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
             </svg>
-            <span>Blockchain-Backed</span>
+            <span>{t('steps.pill3')}</span>
           </div>
         </div>
 

@@ -1,4 +1,7 @@
+import { useLanguage } from '../../i18n/LanguageContext'
+
 export default function AuthRequiredModal({ onClose, onProceedToLogin }) {
+  const { t } = useLanguage()
   return (
     <div className="bhoomi-modal-overlay" onClick={onClose}>
       <div
@@ -25,10 +28,10 @@ export default function AuthRequiredModal({ onClose, onProceedToLogin }) {
           </svg>
         </div>
         <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '0 0 8px 0' }}>
-          Sign In Required
+          {t('authModal.title')}
         </h3>
         <p style={{ fontSize: '14px', color: '#4b5563', lineHeight: 1.5, margin: '0 0 24px 0' }}>
-          To upload, digitize, and verify your land records, please sign in or create an account first.
+          {t('authModal.desc')}
         </p>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button
@@ -36,14 +39,14 @@ export default function AuthRequiredModal({ onClose, onProceedToLogin }) {
             style={{ justifyContent: 'center', width: '100%' }}
             onClick={onProceedToLogin}
           >
-            Create Account / Sign In →
+            {t('authModal.signInBtn')}
           </button>
           <button
             className="btn-how-it-works-downward"
             style={{ width: '100%' }}
             onClick={onClose}
           >
-            Cancel
+            {t('authModal.cancelBtn')}
           </button>
         </div>
       </div>

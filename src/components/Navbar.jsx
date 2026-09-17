@@ -1,16 +1,22 @@
+import React from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
+
 // Navbar: Header bar with BhoomIntelli sprout branding, middle nav links & auth controls
 export default function Navbar({
   user,
   unreadCount,
-  onOpenDrawer,
+  onOpenDrawer: _onOpenDrawer,
   onOpenNotifications,
   onOpenProfile,
   onOpenAbout,
   onOpenSupport,
   onOpenLogin,
   onLogout,
-  onScrollToSection
+  onScrollToSection,
+  onOpenLanguage
 }) {
+  const { t } = useLanguage()
+
   return (
     <header className="bhoomi-navbar">
       <div className="bhoomi-navbar-inner">
@@ -39,36 +45,49 @@ export default function Navbar({
             className="bhoomi-nav-link active"
             onClick={() => onScrollToSection && onScrollToSection('top')}
           >
-            Home
+            {t('nav.home')}
           </button>
           <button
             className="bhoomi-nav-link"
             onClick={() => onScrollToSection && onScrollToSection('about')}
           >
-            About
+            {t('nav.about')}
           </button>
           <button
             className="bhoomi-nav-link"
             onClick={() => onScrollToSection && onScrollToSection('features')}
           >
-            Features
+            {t('nav.features')}
           </button>
           <button
             className="bhoomi-nav-link"
             onClick={() => onScrollToSection && onScrollToSection('three-steps')}
           >
-            How It Works
+            {t('nav.howItWorks')}
           </button>
           <button
             className="bhoomi-nav-link"
             onClick={onOpenSupport}
           >
-            Support
+            {t('nav.support')}
           </button>
         </nav>
 
         {/* ── Right side controls ── */}
         <div className="bhoomi-nav-right">
+
+          <button
+            className="bhoomi-nav-icon-btn"
+            onClick={onOpenLanguage}
+            title="Change Language"
+            aria-label="Change Language"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+          </button>
 
           {/* Notification bell (or About info if guest) */}
           {user ? (
@@ -117,7 +136,7 @@ export default function Navbar({
                 onClick={onLogout}
                 title="Sign out of account"
               >
-                Sign Out
+                {t('nav.signOut')}
               </button>
             </div>
           ) : (
@@ -126,7 +145,7 @@ export default function Navbar({
               onClick={() => onOpenLogin && onOpenLogin('signin')}
               title="Sign in to your BhoomIntelli workspace"
             >
-              Login
+              {t('nav.login')}
             </button>
           )}
 

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useLanguage } from '../../i18n/LanguageContext'
 
 // ProfileTab: Minimal, high-contrast landholder profile with integrated mobile OTP verification
 // Modeled after clean real-world portals (WhatsApp / Flipkart / DigiLocker)
@@ -7,6 +8,7 @@ export default function ProfileTab({
   onProfileSave,
   verificationAlert = false
 }) {
+  const { t } = useLanguage()
   const [formData, setFormData] = useState({
     name: profileData.name || '',
     username: profileData.username || '',
@@ -25,6 +27,8 @@ export default function ProfileTab({
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
   const [otpError, setOtpError] = useState('')
   const [saveSuccess, setSaveSuccess] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [saveProgress, setSaveProgress] = useState(0)
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -36,7 +40,7 @@ export default function ProfileTab({
     e.preventDefault()
     setOtpError('')
     if (!formData.contact || formData.contact.replace(/\D/g, '').length < 10) {
-      setOtpError('Please enter a valid 10-digit mobile number.')
+      setOtpError(t('profile.invalidPhoneError'))
       return
     }
     setShowOtpInput(true)
@@ -47,14 +51,14 @@ export default function ProfileTab({
     e.preventDefault()
     const entered = otpDigits.join('')
     if (entered.length < 6) {
-      setOtpError('Please enter the 6-digit OTP code.')
+      setOtpError(t('profile.invalidOtpError'))
       return
     }
     // Accept demo OTP or any 6 digits for testing
     setFormData((prev) => ({ ...prev, isPhoneVerified: true }))
     setShowOtpInput(false)
     setOtpError('')
-    setSaveSuccess('Mobile number verified successfully!')
+    setSaveSuccess(t('profile.phoneVerifiedSuccess'))
 
     // Auto update parent state with verified phone
     onProfileSave({
@@ -67,13 +71,43 @@ export default function ProfileTab({
   // Handle saving full profile
   const handleSaveAll = (e) => {
     e.preventDefault()
-    onProfileSave(formData)
-    setSaveSuccess('Profile details saved successfully!')
-    setTimeout(() => setSaveSuccess(''), 4000)
+    if (isSaving) return
+
+    setIsSaving(true)
+    setSaveProgress(0)
+    setSaveSuccess('')
+
+    // Animate progress bar from 0 → 100 over ~800ms
+    let prog = 0
+    const interval = setInterval(() => {
+      prog += Math.random() * 18 + 8
+      if (prog >= 100) {
+        prog = 100
+        clearInterval(interval)
+        // Save and finish
+        onProfileSave(formData)
+        setSaveProgress(100)
+        setIsSaving(false)
+        setSaveSuccess(t('profile.profileSavedSuccess'))
+        // Scroll drawer body to top
+        const drawerBody = document.querySelector('.bhoomi-drawer-body')
+        if (drawerBody) drawerBody.scrollTo({ top: 0, behavior: 'smooth' })
+        setTimeout(() => setSaveSuccess(''), 4000)
+      } else {
+        setSaveProgress(prog)
+      }
+    }, 80)
   }
 
   return (
     <div className="profile-tab-clean">
+
+      {/* Loading Bar */}
+      {isSaving && (
+        <div className="profile-loading-bar-wrapper">
+          <div className="profile-loading-bar-fill" style={{ width: `${saveProgress}%` }} />
+        </div>
+      )}
 
       {/* Upload Gating Alert Banner */}
       {(!formData.isPhoneVerified || verificationAlert) && (
@@ -86,9 +120,9 @@ export default function ProfileTab({
             </svg>
           </div>
           <div>
-            <div className="alert-title">Identity Verification Required</div>
+            <div className="alert-title">{t('profile.verifyIdentityRequired')}</div>
             <div className="alert-sub">
-              To upload and digitize land records, please update your profile and verify your 10-digit mobile number with OTP.
+              {t('profile.verifyIdentityDesc')}
             </div>
           </div>
         </div>
@@ -110,11 +144,11 @@ export default function ProfileTab({
           {((formData.username || formData.name)?.[0] || 'U').toUpperCase()}
         </div>
         <div className="profile-header-meta">
-          <h3 className="profile-display-name">{formData.name || 'Landholder Account'}</h3>
+          <h3 className="profile-display-name">{formData.name || t('profile.landholderAccount')}</h3>
           <div className="profile-handle-row">
             {formData.username && <span className="profile-handle">@{formData.username}</span>}
             <span className={`profile-status-badge ${formData.isPhoneVerified ? 'verified' : 'unverified'}`}>
-              {formData.isPhoneVerified ? '✓ Verified Account' : '● Verification Pending'}
+              {formData.isPhoneVerified ? t('profile.verifiedAccount') : t('profile.verificationPending')}
             </span>
           </div>
         </div>
@@ -124,12 +158,12 @@ export default function ProfileTab({
 
         {/* ── SECTION 1: Account & Verification ── */}
         <div className="profile-form-section">
-          <h4 className="section-title">Account &amp; Security</h4>
+          <h4 className="section-title">{t('profile.accountSecurity')}</h4>
 
           {/* Email (Derived from login, verified) */}
           <div className="form-field-group">
             <label className="field-label" htmlFor="prof-email">
-              Registered Email
+              {t('profile.registeredEmail')}
             </label>
             <div className="input-with-badge">
               <input
@@ -139,21 +173,21 @@ export default function ProfileTab({
                 value={formData.email}
                 disabled
               />
-              <span className="input-side-badge">✓ Login Account</span>
+              <span className="input-side-badge">✓ {t('profile.loginAccount')}</span>
             </div>
           </div>
 
           {/* Mobile Number & OTP Verification */}
           <div className="form-field-group">
             <label className="field-label" htmlFor="prof-contact">
-              Mobile Number
+              {t('profile.mobileNumber')}
             </label>
             <div className="phone-verify-row">
               <input
                 id="prof-contact"
                 type="tel"
                 className={`clean-input ${formData.isPhoneVerified ? 'phone-verified' : ''}`}
-                placeholder="Enter 10-digit mobile number"
+                placeholder={t('profile.mobilePlaceholder')}
                 value={formData.contact}
                 onChange={(e) => handleInputChange('contact', e.target.value.replace(/\D/g, '').slice(0, 10))}
                 maxLength={10}
@@ -166,14 +200,14 @@ export default function ProfileTab({
                   className="btn-send-phone-otp"
                   onClick={handleSendPhoneOtp}
                 >
-                  {showOtpInput ? 'Resend OTP' : 'Verify via OTP'}
+                  {showOtpInput ? t('profile.resendOtp') : t('profile.verifyViaOtp')}
                 </button>
               ) : (
                 <div className="phone-verified-tag">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#15803d" strokeWidth="2.5">
                     <path d="m5 12 5 5L20 7" />
                   </svg>
-                  <span>Verified</span>
+                  <span>{t('profile.verified')}</span>
                 </div>
               )}
             </div>
@@ -184,8 +218,8 @@ export default function ProfileTab({
             {showOtpInput && !formData.isPhoneVerified && (
               <div className="profile-otp-box">
                 <div className="otp-box-header">
-                  <span>Enter 6-Digit Verification Code:</span>
-                  <span className="demo-code-pill">Demo OTP: <strong>482910</strong></span>
+                  <span>{t('profile.enterCode')}:</span>
+                  <span className="demo-code-pill">{t('profile.demoOtp')}: <strong>482910</strong></span>
                 </div>
 
                 <div className="otp-inputs-grid">
@@ -220,7 +254,7 @@ export default function ProfileTab({
                   className="btn-verify-otp-submit"
                   onClick={handleVerifyPhoneOtp}
                 >
-                  Confirm &amp; Verify Mobile
+                  {t('profile.confirmVerify')}
                 </button>
               </div>
             )}
@@ -229,18 +263,18 @@ export default function ProfileTab({
 
         {/* ── SECTION 2: Landholder Identity ── */}
         <div className="profile-form-section">
-          <h4 className="section-title">Landholder Details</h4>
+          <h4 className="section-title">{t('profile.landholderDetails')}</h4>
 
           {/* Full Name */}
           <div className="form-field-group">
             <label className="field-label" htmlFor="prof-name">
-              Full Legal Name (as per Land Registry)
+              {t('profile.fullLegalName')}
             </label>
             <input
               id="prof-name"
               type="text"
               className="clean-input"
-              placeholder="e.g. Ramesh Kumar"
+              placeholder={t('profile.namePlaceholder')}
               value={formData.name}
               onChange={(e) => handleInputChange('name', e.target.value)}
               required
@@ -251,7 +285,7 @@ export default function ProfileTab({
             {/* Gender */}
             <div className="form-field-group">
               <label className="field-label" htmlFor="prof-gender">
-                Gender
+                {t('profile.gender')}
               </label>
               <select
                 id="prof-gender"
@@ -259,17 +293,17 @@ export default function ProfileTab({
                 value={formData.gender}
                 onChange={(e) => handleInputChange('gender', e.target.value)}
               >
-                <option value="">Select Gender</option>
-                <option value="Male">Male</option>
-                <option value="Female">Female</option>
-                <option value="Other">Other</option>
+                <option value="">{t('profile.selectGender')}</option>
+                <option value="Male">{t('profile.male')}</option>
+                <option value="Female">{t('profile.female')}</option>
+                <option value="Other">{t('profile.other')}</option>
               </select>
             </div>
 
             {/* Date of Birth */}
             <div className="form-field-group">
               <label className="field-label" htmlFor="prof-dob">
-                Date of Birth (DOB)
+                {t('profile.dob')}
               </label>
               <input
                 id="prof-dob"
@@ -284,13 +318,13 @@ export default function ProfileTab({
           {/* Address */}
           <div className="form-field-group">
             <label className="field-label" htmlFor="prof-address">
-              Village / Residential Address
+              {t('profile.villageAddress')}
             </label>
             <input
               id="prof-address"
               type="text"
               className="clean-input"
-              placeholder="House/Plot No., Village/Ward, Tehsil"
+              placeholder={t('profile.addressPlaceholder')}
               value={formData.address}
               onChange={(e) => handleInputChange('address', e.target.value)}
             />
@@ -300,13 +334,13 @@ export default function ProfileTab({
             {/* District */}
             <div className="form-field-group">
               <label className="field-label" htmlFor="prof-district">
-                District
+                {t('profile.district')}
               </label>
               <input
                 id="prof-district"
                 type="text"
                 className="clean-input"
-                placeholder="e.g. Gurugram / Mohali"
+                placeholder={t('profile.districtPlaceholder')}
                 value={formData.district}
                 onChange={(e) => handleInputChange('district', e.target.value)}
               />
@@ -315,13 +349,13 @@ export default function ProfileTab({
             {/* State */}
             <div className="form-field-group">
               <label className="field-label" htmlFor="prof-state">
-                State / UT
+                {t('profile.stateUT')}
               </label>
               <input
                 id="prof-state"
                 type="text"
                 className="clean-input"
-                placeholder="e.g. Haryana / Punjab"
+                placeholder={t('profile.statePlaceholder')}
                 value={formData.state}
                 onChange={(e) => handleInputChange('state', e.target.value)}
               />
@@ -331,8 +365,15 @@ export default function ProfileTab({
 
         {/* Save Button */}
         <div className="profile-form-footer">
-          <button type="submit" className="bhoomi-btn-save-profile">
-            Save Profile Details
+          <button type="submit" className="bhoomi-btn-save-profile" disabled={isSaving}>
+            {isSaving ? (
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ animation: 'spin 1s linear infinite' }}>
+                  <path d="M21 12a9 9 0 1 1-6.219-8.56" />
+                </svg>
+                {t('profile.saving')}
+              </span>
+            ) : t('profile.saveDetails')}
           </button>
         </div>
 

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import Login from './login.jsx'
 import Website from './website.jsx'
+import LanguageSelectModal from './components/modals/LanguageSelectModal.jsx'
 import './login.css'
 import './App.css'
 
@@ -9,6 +10,7 @@ export default function App() {
   const [currentPage, setCurrentPage] = useState('website')
   const [currentUser, setCurrentUser] = useState(null)
   const [authMode, setAuthMode] = useState('signin') // 'signin' or 'create'
+  const [showLangModal, setShowLangModal] = useState(false)
 
   // Called when user clicks "Login" or is asked to login before upload
   const handleOpenLogin = (mode = 'signin') => {
@@ -30,11 +32,16 @@ export default function App() {
 
   return (
     <div className="app-root">
+      <LanguageSelectModal 
+        forceShow={showLangModal} 
+        onClose={() => setShowLangModal(false)} 
+      />
       {currentPage === 'website' ? (
         <Website
           user={currentUser}
           onLogout={handleLogout}
           onOpenLogin={handleOpenLogin}
+          onOpenLanguage={() => setShowLangModal(true)}
         />
       ) : (
         <Login

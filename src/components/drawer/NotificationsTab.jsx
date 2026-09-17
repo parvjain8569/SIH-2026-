@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useLanguage } from '../../i18n/LanguageContext'
 
 export default function NotificationsTab({ notifications, onMarkAllRead }) {
+  const { t } = useLanguage()
   const [filter, setFilter] = useState('all') // 'all' | 'processing' | 'status' | 'decision'
 
   const filtered = notifications.filter(
@@ -15,7 +17,7 @@ export default function NotificationsTab({ notifications, onMarkAllRead }) {
           className={`notif-filter-pill ${filter === 'all' ? 'active' : ''}`}
           onClick={() => setFilter('all')}
         >
-          All ({notifications.length})
+          {t('notifications.all')} ({notifications.length})
         </button>
 
         <button
@@ -29,7 +31,7 @@ export default function NotificationsTab({ notifications, onMarkAllRead }) {
             <line x1="16" y1="17" x2="8" y2="17" />
             <line x1="10" y1="9" x2="8" y2="9" />
           </svg>
-          <span>Document Processing</span>
+          <span>{t('notifications.processing')}</span>
         </button>
 
         <button
@@ -40,7 +42,7 @@ export default function NotificationsTab({ notifications, onMarkAllRead }) {
             <circle cx="12" cy="12" r="10" />
             <polyline points="9 12 11 14 15 10" />
           </svg>
-          <span>Verification Status</span>
+          <span>{t('notifications.verification')}</span>
         </button>
 
         <button
@@ -54,7 +56,7 @@ export default function NotificationsTab({ notifications, onMarkAllRead }) {
             <path d="M4 12l4-4 4 4" />
             <path d="M20 12l-4-4-4 4" />
           </svg>
-          <span>Accept / Reject</span>
+          <span>{t('notifications.decision')}</span>
         </button>
       </div>
 
@@ -105,7 +107,7 @@ export default function NotificationsTab({ notifications, onMarkAllRead }) {
 
       <div style={{ textAlign: 'center', marginTop: '20px' }}>
         <button className="btn-view-record" onClick={onMarkAllRead}>
-          ✓ Mark all as read
+          ✓ {t('notifications.markAllRead')}
         </button>
       </div>
     </div>
