@@ -1,10 +1,14 @@
+import React from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
+
 // FeaturesSection: 4 Core technology capabilities matching the BhoomIntelli design
 export default function FeaturesSection() {
+  const { t } = useLanguage()
   const features = [
     {
       id: 'ocr',
-      title: 'OCR Technology',
-      desc: 'Reads scanned & handwritten documents accurately',
+      title: t('features.ocr.title'),
+      desc: t('features.ocr.desc'),
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M4 8V4m0 0h4M4 4l5 5m11-5v4m0-4h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
@@ -14,8 +18,8 @@ export default function FeaturesSection() {
     },
     {
       id: 'structuring',
-      title: 'Smart Structuring',
-      desc: 'Organizes data like landowner, plot, district, registration etc.',
+      title: t('features.structuring.title'),
+      desc: t('features.structuring.desc'),
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <ellipse cx="12" cy="5" rx="9" ry="3" />
@@ -26,8 +30,8 @@ export default function FeaturesSection() {
     },
     {
       id: 'duplicate',
-      title: 'Duplicate Check',
-      desc: 'Detects and flags redundant records',
+      title: t('features.duplicate.title'),
+      desc: t('features.duplicate.desc'),
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -37,8 +41,8 @@ export default function FeaturesSection() {
     },
     {
       id: 'security',
-      title: 'Secure & Reliable',
-      desc: 'Your data stays safe with advanced security',
+      title: t('features.security.title'),
+      desc: t('features.security.desc'),
       icon: (
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />

@@ -1,3 +1,6 @@
+import React from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
+
 // Navbar: Header bar with BhoomIntelli sprout branding, middle nav links & auth controls
 export default function Navbar({
   user,
@@ -9,8 +12,11 @@ export default function Navbar({
   onOpenSupport,
   onOpenLogin,
   onLogout,
-  onScrollToSection
+  onScrollToSection,
+  onOpenLanguage
 }) {
+  const { currentLang, setLanguage, languages, t } = useLanguage()
+
   return (
     <header className="bhoomi-navbar">
       <div className="bhoomi-navbar-inner">
@@ -39,36 +45,65 @@ export default function Navbar({
             className="bhoomi-nav-link active"
             onClick={() => onScrollToSection && onScrollToSection('top')}
           >
-            Home
+            {t('nav.home')}
           </button>
           <button
             className="bhoomi-nav-link"
             onClick={() => onScrollToSection && onScrollToSection('about')}
           >
-            About
+            {t('nav.about')}
           </button>
           <button
             className="bhoomi-nav-link"
             onClick={() => onScrollToSection && onScrollToSection('features')}
           >
-            Features
+            {t('nav.features')}
           </button>
           <button
             className="bhoomi-nav-link"
             onClick={() => onScrollToSection && onScrollToSection('three-steps')}
           >
-            How It Works
+            {t('nav.howItWorks')}
           </button>
           <button
             className="bhoomi-nav-link"
             onClick={onOpenSupport}
           >
-            Support
+            {t('nav.support')}
           </button>
         </nav>
 
         {/* ── Right side controls ── */}
         <div className="bhoomi-nav-right">
+
+          {/* ── Direct 1-Click Language Dropdown Select ── */}
+          <div className="bhoomi-lang-select-wrapper" title="Select Language / भाषा चुनें">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="bhoomi-lang-globe-icon">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="2" y1="12" x2="22" y2="12"></line>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+            </svg>
+            <select
+              className="bhoomi-lang-select"
+              value={currentLang || 'en'}
+              onChange={(e) => {
+                if (e.target.value === '__MORE__') {
+                  if (onOpenLanguage) onOpenLanguage();
+                } else {
+                  setLanguage(e.target.value);
+                }
+              }}
+              aria-label="Select Language"
+            >
+              {languages && languages.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.native} ({lang.name})
+                </option>
+              ))}
+              <option value="__MORE__">🌐 All Languages Grid...</option>
+            </select>
+            <span className="bhoomi-lang-caret">▾</span>
+          </div>
 
           {/* Notification bell (or About info if guest) */}
           {user ? (
@@ -117,7 +152,7 @@ export default function Navbar({
                 onClick={onLogout}
                 title="Sign out of account"
               >
-                Sign Out
+                {t('nav.signOut')}
               </button>
             </div>
           ) : (
@@ -126,10 +161,23 @@ export default function Navbar({
               onClick={() => onOpenLogin && onOpenLogin('signin')}
               title="Sign in to your BhoomIntelli workspace"
             >
-              Login
+              {t('nav.login')}
             </button>
           )}
 
+          {/* Mobile hamburger menu toggle */}
+          <button
+            className="bhoomi-mobile-menu-btn"
+            onClick={onOpenDrawer}
+            aria-label="Toggle menu"
+            title="Menu"
+          >
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          </button>
         </div>
 
       </div>

@@ -64,3 +64,29 @@ export function formatDisplayName(username) {
   if (!username) return 'User'
   return username.charAt(0).toUpperCase() + username.slice(1)
 }
+
+// ── Aadhaar e-KYC Mock Data Generator ───────────────────────────────
+const MOCK_NAMES = ['Ramesh Kumar', 'Sunita Devi', 'Ajay Singh', 'Priya Sharma', 'Mahesh Yadav', 'Rekha Verma', 'Sunil Gupta', 'Anita Kumari']
+const MOCK_ADDRESSES = ['Village Khandsa, Gurugram', 'Mohalla Sadar, Karnal', 'Ward 5, Rewari', 'Sector 14, Faridabad', 'Near Bus Stand, Panipat']
+const MOCK_DISTRICTS = ['Gurugram', 'Karnal', 'Rewari', 'Faridabad', 'Panipat', 'Hisar', 'Rohtak']
+const MOCK_CONTACTS = ['9876543210', '9123456789', '8899776655', '7788994433', '9988776655']
+
+export function generateMockAadhaarData(aadhaarNum) {
+  const cleaned = aadhaarNum.replace(/\s/g, '')
+  const formatted = cleaned.replace(/(\d{4})/g, '$1 ').trim()
+  const masked = 'XXXX XXXX ' + cleaned.slice(-4)
+  return {
+    aadhaarNumber: cleaned,
+    formattedAadhaar: formatted,
+    maskedAadhaar: masked,
+    name: MOCK_NAMES[Math.floor(Math.random() * MOCK_NAMES.length)],
+    dob: `${10 + Math.floor(Math.random() * 20)}/0${1 + Math.floor(Math.random() * 9)}/19${70 + Math.floor(Math.random() * 25)}`,
+    gender: Math.random() > 0.5 ? 'Male' : 'Female',
+    address: MOCK_ADDRESSES[Math.floor(Math.random() * MOCK_ADDRESSES.length)],
+    district: MOCK_DISTRICTS[Math.floor(Math.random() * MOCK_DISTRICTS.length)],
+    state: 'Haryana',
+    pincode: `1${20 + Math.floor(Math.random() * 10)}0${Math.floor(Math.random() * 10)}${Math.floor(Math.random() * 10)}`,
+    contact: MOCK_CONTACTS[Math.floor(Math.random() * MOCK_CONTACTS.length)],
+  }
+}
+

@@ -1,6 +1,10 @@
+import React from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
+
 // TransformationFlow: Visual "Land Document → Verified Digital Record" flow
 // Displayed just above the footer on the home page
 export default function TransformationFlow() {
+  const { t } = useLanguage()
   return (
     <section className="bhoomi-flow-section">
       <div className="bhoomi-flow-wrapper">
@@ -17,8 +21,8 @@ export default function TransformationFlow() {
             </svg>
           </div>
           <div>
-            <div className="flow-card-title">Land Document</div>
-            <div className="flow-card-sub">PDF / JPG / PNG</div>
+            <div className="flow-card-title">{t('flow.source.title')}</div>
+            <div className="flow-card-sub">{t('flow.source.sub')}</div>
           </div>
         </div>
 
@@ -39,8 +43,8 @@ export default function TransformationFlow() {
             </svg>
           </div>
           <div>
-            <div className="flow-card-title">Verified Digital Record</div>
-            <div className="flow-card-sub green">Ready to download</div>
+            <div className="flow-card-title">{t('flow.target.title')}</div>
+            <div className="flow-card-sub green">{t('flow.target.sub')}</div>
           </div>
         </div>
 

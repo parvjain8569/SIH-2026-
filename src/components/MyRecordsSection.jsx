@@ -1,14 +1,18 @@
+import React from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
+
 // MyRecordsSection: Displays the user's digitized land record ledger
 // Each record shows owner, parcel ID, date, filename, status badge, and a "View Record" trigger
 export default function MyRecordsSection({ records, onUpload, onViewRecord }) {
+  const { t } = useLanguage()
   return (
     <main className="bhoomi-my-records-section">
 
       {/* Header: Title + Upload New Document button */}
       <div className="bhoomi-my-records-header">
         <div>
-          <h1 className="bhoomi-records-title">My Records</h1>
-          <p className="bhoomi-records-subtitle">Your digitized land records in one place.</p>
+          <h1 className="bhoomi-records-title">{t('records.title')}</h1>
+          <p className="bhoomi-records-subtitle">{t('records.subtitle')}</p>
         </div>
         <button className="btn-upload-primary" onClick={onUpload}>
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3">
@@ -16,7 +20,7 @@ export default function MyRecordsSection({ records, onUpload, onViewRecord }) {
             <path d="M12 12v9"></path>
             <path d="m8 16 4-4 4 4"></path>
           </svg>
-          Upload New Document
+          {t('records.uploadNew')}
         </button>
       </div>
 
@@ -33,12 +37,12 @@ export default function MyRecordsSection({ records, onUpload, onViewRecord }) {
                 {rec.ownerName}
                 {rec.isNew && (
                   <span style={{ fontSize: '11px', background: '#dcfce7', color: '#15803d', padding: '2px 7px', borderRadius: '4px', fontWeight: 600 }}>
-                    Just Uploaded
+                    {t('records.justUploaded')}
                   </span>
                 )}
               </h3>
               <p className="bhoomi-record-meta">
-                Parcel ID: {rec.parcelId} · {rec.date}
+                {t('records.parcelId')}: {rec.parcelId} · {rec.date}
               </p>
               {rec.documentName && (
                 <span className="bhoomi-record-filename-tag">
@@ -55,7 +59,7 @@ export default function MyRecordsSection({ records, onUpload, onViewRecord }) {
                     <circle cx="12" cy="12" r="10"></circle>
                     <polyline points="9 12 11 14 15 10"></polyline>
                   </svg>
-                  Verified
+                  {t('records.verified')}
                 </span>
               ) : (
                 <span className="status-pill status-pill-review">
@@ -64,7 +68,7 @@ export default function MyRecordsSection({ records, onUpload, onViewRecord }) {
                     <line x1="12" y1="9" x2="12" y2="13"></line>
                     <line x1="12" y1="17" x2="12.01" y2="17"></line>
                   </svg>
-                  Needs Review
+                  {t('records.needsReview')}
                 </span>
               )}
 
@@ -73,7 +77,7 @@ export default function MyRecordsSection({ records, onUpload, onViewRecord }) {
                   <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
                   <circle cx="12" cy="12" r="3"></circle>
                 </svg>
-                View Record
+                {t('records.viewRecord')}
               </button>
             </div>
           </div>

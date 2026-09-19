@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { useLanguage } from '../../i18n/LanguageContext'
 
 // SettingsTab handles: Change Email / Phone / Password, each with 3-step OTP verification
 export default function SettingsTab({ profileData, onProfileUpdate }) {
+  const { t } = useLanguage()
   const [subTab, setSubTab] = useState('email') // 'email' | 'phone' | 'password'
   const [step, setStep] = useState(1)           // 1: input, 2: verify OTP, 3: success
 
@@ -36,23 +38,23 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
 
     if (subTab === 'email') {
       if (!newEmail || !newEmail.includes('@')) {
-        setErrorMsg('Please enter a valid new email address.')
+        setErrorMsg(t('settings.invalidEmail'))
         return
       }
       setOtpTarget(newEmail)
     } else if (subTab === 'phone') {
       if (!newPhone || newPhone.length < 10) {
-        setErrorMsg('Please enter a valid 10-digit mobile number.')
+        setErrorMsg(t('settings.invalidPhone'))
         return
       }
       setOtpTarget(newPhone)
     } else if (subTab === 'password') {
       if (!currentPass || !newPass) {
-        setErrorMsg('Please enter your current and new password.')
+        setErrorMsg(t('settings.missingPassword'))
         return
       }
       if (newPass.length < 6) {
-        setErrorMsg('New password must be at least 6 characters.')
+        setErrorMsg(t('settings.shortPassword'))
         return
       }
       setOtpTarget(profileData.email)
@@ -65,19 +67,19 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
   const handleVerifyOtp = () => {
     const fullOtp = otpValue.join('')
     if (fullOtp.length < 6) {
-      setErrorMsg('Please enter the full 6-digit OTP.')
+      setErrorMsg(t('settings.invalidOtp'))
       return
     }
 
     // Apply the update and notify parent
     if (subTab === 'email') {
       onProfileUpdate({ email: otpTarget })
-      setSuccessMsg(`Email address successfully updated to ${otpTarget}!`)
+      setSuccessMsg(t('settings.emailUpdated').replace('{email}', otpTarget))
     } else if (subTab === 'phone') {
       onProfileUpdate({ contact: otpTarget })
-      setSuccessMsg(`Phone number successfully updated to ${otpTarget}!`)
+      setSuccessMsg(t('settings.phoneUpdated').replace('{phone}', otpTarget))
     } else if (subTab === 'password') {
-      setSuccessMsg('Password updated successfully!')
+      setSuccessMsg(t('settings.passwordUpdated'))
     }
 
     setStep(3)
@@ -95,7 +97,7 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
             <rect width="20" height="16" x="2" y="4" rx="2" />
             <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" />
           </svg>
-          <span>Change Email</span>
+          <span>{t('settings.changeEmail')}</span>
         </button>
 
         <button
@@ -106,7 +108,7 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
             <rect width="14" height="20" x="5" y="2" rx="2" ry="2" />
             <path d="M12 18h.01" />
           </svg>
-          <span>Change Number</span>
+          <span>{t('settings.changeNumber')}</span>
         </button>
 
         <button
@@ -119,7 +121,7 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
             <path d="M17 3l4 4" />
             <path d="M14 6l2 2" />
           </svg>
-          <span>Change Password</span>
+          <span>{t('settings.changePassword')}</span>
         </button>
       </div>
 
@@ -141,7 +143,7 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
           <div>
             {subTab === 'email' && (
               <div className="settings-form-group">
-                <label className="settings-label">Current Email</label>
+                <label className="settings-label">{t('settings.currentEmail')}</label>
                 <input
                   type="text"
                   disabled
@@ -150,12 +152,12 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
                   style={{ backgroundColor: '#f1f5f9' }}
                 />
                 <label className="settings-label" style={{ marginTop: '14px' }}>
-                  New Email Address
+                  {t('settings.newEmail')}
                 </label>
                 <input
                   type="email"
                   className="profile-input"
-                  placeholder="Enter your new email"
+                  placeholder={t('settings.newEmailPlaceholder')}
                   value={newEmail}
                   onChange={(e) => setNewEmail(e.target.value)}
                 />
@@ -164,14 +166,14 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
                   style={{ marginTop: '18px' }}
                   onClick={handleSendOtp}
                 >
-                  Send Verification OTP to New Email
+                  {t('settings.sendEmailOtp')}
                 </button>
               </div>
             )}
 
             {subTab === 'phone' && (
               <div className="settings-form-group">
-                <label className="settings-label">Current Mobile Number</label>
+                <label className="settings-label">{t('settings.currentMobile')}</label>
                 <input
                   type="text"
                   disabled
@@ -180,12 +182,12 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
                   style={{ backgroundColor: '#f1f5f9' }}
                 />
                 <label className="settings-label" style={{ marginTop: '14px' }}>
-                  New Mobile Number
+                  {t('settings.newMobile')}
                 </label>
                 <input
                   type="tel"
                   className="profile-input"
-                  placeholder="+91 9XXXXXXXXX"
+                  placeholder={t('settings.newMobilePlaceholder')}
                   value={newPhone}
                   onChange={(e) => setNewPhone(e.target.value)}
                 />
@@ -194,28 +196,28 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
                   style={{ marginTop: '18px' }}
                   onClick={handleSendOtp}
                 >
-                  Send SMS OTP to New Number
+                  {t('settings.sendSmsOtp')}
                 </button>
               </div>
             )}
 
             {subTab === 'password' && (
               <div className="settings-form-group">
-                <label className="settings-label">Current Password</label>
+                <label className="settings-label">{t('settings.currentPass')}</label>
                 <input
                   type="password"
                   className="profile-input"
-                  placeholder="Enter current password"
+                  placeholder={t('settings.currentPassPlaceholder')}
                   value={currentPass}
                   onChange={(e) => setCurrentPass(e.target.value)}
                 />
                 <label className="settings-label" style={{ marginTop: '14px' }}>
-                  New Password
+                  {t('settings.newPass')}
                 </label>
                 <input
                   type="password"
                   className="profile-input"
-                  placeholder="At least 6 characters"
+                  placeholder={t('settings.newPassPlaceholder')}
                   value={newPass}
                   onChange={(e) => setNewPass(e.target.value)}
                 />
@@ -224,7 +226,7 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
                   style={{ marginTop: '18px' }}
                   onClick={handleSendOtp}
                 >
-                  Send OTP to Confirm Password Change
+                  {t('settings.sendPassOtp')}
                 </button>
               </div>
             )}
@@ -235,14 +237,14 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
         {step === 2 && (
           <div style={{ textAlign: 'center' }}>
             <h4 style={{ margin: '0 0 8px 0', fontSize: '18px', color: '#111827' }}>
-              Enter Verification OTP
+              {t('settings.enterOtpTitle')}
             </h4>
             <p style={{ margin: 0, fontSize: '13.5px', color: '#64748b' }}>
-              A 6-digit one-time code was sent to <strong>{otpTarget}</strong>
+              {t('settings.otpSentTo')} <strong>{otpTarget}</strong>
             </p>
 
             <div className="demo-otp-pill">
-              💡 Demo Testing Code: <strong>482910</strong> (or enter any 6 digits)
+              💡 {t('settings.demoOtpInfo')}: <strong>482910</strong>
             </div>
 
             <div className="otp-box-row">
@@ -274,10 +276,10 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button className="btn-how-it-works-downward" onClick={() => setStep(1)}>
-                Back
+                {t('settings.back')}
               </button>
               <button className="btn-upload-primary" onClick={handleVerifyOtp}>
-                Verify OTP &amp; Update
+                {t('settings.verifyUpdate')}
               </button>
             </div>
           </div>
@@ -304,13 +306,13 @@ export default function SettingsTab({ profileData, onProfileUpdate }) {
               </svg>
             </div>
             <h4 style={{ fontSize: '18px', margin: '0 0 8px 0', color: '#15803d', fontWeight: 800 }}>
-              Verification Successful!
+              {t('settings.successTitle')}
             </h4>
             <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '20px' }}>
-              Your updated details have been securely recorded.
+              {t('settings.successDesc')}
             </p>
             <button className="btn-upload-primary" onClick={resetForm}>
-              Update Another Setting
+              {t('settings.updateAnother')}
             </button>
           </div>
         )}

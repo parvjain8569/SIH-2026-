@@ -1,5 +1,9 @@
+import React from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
+
 // ImpactSection: Technical Architecture & System Benchmarks (SS 2 in White & Green theme)
 export default function ImpactSection() {
+  const { t } = useLanguage()
   return (
     <section className="bhoomi-benchmarks-section" id="about">
       <div className="bhoomi-benchmarks-container">
@@ -10,13 +14,13 @@ export default function ImpactSection() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
             </svg>
-            SYSTEM BENCHMARKS &amp; ARCHITECTURE
+            {t('impact.tag')}
           </span>
           <h2 className="bhoomi-benchmarks-title">
-            Enterprise-Grade Land Intelligence
+            {t('impact.title')}
           </h2>
           <p className="bhoomi-benchmarks-subtitle">
-            High-precision OCR extraction, sub-second cadastral triangulation, and zero-trust fallback audited for Indian land administration.
+            {t('impact.subtitle')}
           </p>
         </div>
 
@@ -40,7 +44,7 @@ export default function ImpactSection() {
                   <line x1="9" y1="14" x2="13" y2="14" stroke="#166534" strokeWidth="1.6" />
                 </svg>
               </div>
-              <h3 className="benchmark-card-title">98% PaddleOCR Field Precision</h3>
+              <h3 className="benchmark-card-title">{t('impact.card1.title')}</h3>
             </div>
 
             {/* Progress Bar Container */}
@@ -54,10 +58,10 @@ export default function ImpactSection() {
             {/* Explanatory details */}
             <div className="benchmark-card-body">
               <p className="benchmark-desc-main">
-                Field-level accuracy across handwritten &amp; printed Indian documents
+                {t('impact.card1.desc')}
               </p>
               <p className="benchmark-desc-sub">
-                • Validated on 5.2k labeled samples
+                {t('impact.card1.sub')}
               </p>
             </div>
 
@@ -65,7 +69,7 @@ export default function ImpactSection() {
             <div className="benchmark-card-footer">
               <span className="benchmark-pill benchmark-pill-pass">
                 <span className="pill-dot"></span>
-                PASS • &gt;95% target
+                {t('impact.card1.pill')}
               </span>
             </div>
           </div>
@@ -85,17 +89,17 @@ export default function ImpactSection() {
                   <polyline points="18 16 18 18 19.5 18" stroke="#166534" strokeWidth="1.6" />
                 </svg>
               </div>
-              <h3 className="benchmark-card-title">&lt;2.0s Database Triangulation Latency</h3>
+              <h3 className="benchmark-card-title">{t('impact.card2.title')}</h3>
             </div>
 
             {/* Big Metric Display */}
             <div className="benchmark-stat-highlight">
               <span className="benchmark-stat-num">1.47s</span>
-              <span className="benchmark-stat-unit">avg</span>
+              <span className="benchmark-stat-unit">{t('impact.card2.avg')}</span>
             </div>
 
             <p className="benchmark-desc-subtle">
-              End-to-end lookup: entity → parcel → ULPIN • p95: 1.92s
+              {t('impact.card2.desc')}
             </p>
 
             {/* Latency Sparkline Graph SVG */}
@@ -135,7 +139,7 @@ export default function ImpactSection() {
             <div className="benchmark-card-footer">
               <span className="benchmark-pill benchmark-pill-pass">
                 <span className="pill-dot"></span>
-                PASS • &lt;2.0s SLA
+                {t('impact.card2.pill')}
               </span>
             </div>
           </div>
@@ -155,8 +159,8 @@ export default function ImpactSection() {
                 </svg>
               </div>
               <div>
-                <h3 className="benchmark-card-title">Bhu-Naksha / ULPIN Geometric Mapping</h3>
-                <div className="benchmark-card-sub-rate">Geo-merge success rate: <strong>96.3%</strong></div>
+                <h3 className="benchmark-card-title">{t('impact.card3.title')}</h3>
+                <div className="benchmark-card-sub-rate" dangerouslySetInnerHTML={{ __html: t('impact.card3.rate') }}></div>
               </div>
             </div>
 
@@ -191,15 +195,12 @@ export default function ImpactSection() {
 
                 {/* Coordinate marker label */}
                 <rect x="156" y="58" width="86" height="20" rx="4" fill="#ffffff" stroke="#86efac" strokeWidth="1" />
-                <text x="162" y="72" fill="#166534" fontSize="9" fontWeight="700">PARCEL #482/A</text>
+                <text x="162" y="72" fill="#166534" fontSize="9" fontWeight="700">{t('impact.card3.parcel')}</text>
               </svg>
             </div>
 
             {/* Cadastral Info line */}
-            <div className="benchmark-meta-detail">
-              <span>ULPIN: <strong>12-345-678-901</strong></span>
-              <span className="benchmark-meta-sep">•</span>
-              <span>Polygon match: <strong>±2.1m</strong></span>
+            <div className="benchmark-meta-detail" dangerouslySetInnerHTML={{ __html: t('impact.card3.meta') }}>
             </div>
 
             {/* Pill Status */}
@@ -208,7 +209,7 @@ export default function ImpactSection() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
-                Verified • GIS layer aligned
+                {t('impact.card3.pill')}
               </span>
             </div>
           </div>
@@ -226,8 +227,8 @@ export default function ImpactSection() {
                 </svg>
               </div>
               <div>
-                <h3 className="benchmark-card-title">Zero-Trust Fallback Routing</h3>
-                <div className="benchmark-card-sub-rate">Unreadable docs → human-in-the-loop review</div>
+                <h3 className="benchmark-card-title">{t('impact.card4.title')}</h3>
+                <div className="benchmark-card-sub-rate">{t('impact.card4.sub')}</div>
               </div>
             </div>
 
@@ -235,7 +236,7 @@ export default function ImpactSection() {
             <div className="benchmark-flow-diagram">
               <div className="flow-step-box unreadable">
                 <span className="flow-step-dot"></span>
-                Unreadable Input
+                {t('impact.card4.flow1')}
               </div>
 
               <div className="flow-arrow-connector">
@@ -250,7 +251,7 @@ export default function ImpactSection() {
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                   <polyline points="9 12 11 14 15 10" />
                 </svg>
-                ZTF Router
+                {t('impact.card4.flow2')}
               </div>
 
               <div className="flow-arrow-connector">
@@ -265,7 +266,7 @@ export default function ImpactSection() {
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
                   <circle cx="12" cy="7" r="4" />
                 </svg>
-                Human Review Queue
+                {t('impact.card4.flow3')}
               </div>
             </div>
 
@@ -276,7 +277,7 @@ export default function ImpactSection() {
                   <polyline points="20 6 9 17 4 12" />
                 </svg>
               </div>
-              <span className="resolved-text">Resolved &amp; Logged to Tamper-Proof Audit</span>
+              <span className="resolved-text">{t('impact.card4.resolved')}</span>
             </div>
 
             {/* Pill Status */}
@@ -285,7 +286,7 @@ export default function ImpactSection() {
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
                 </svg>
-                100% Coverage • Audit Trail Enabled
+                {t('impact.card4.pill')}
               </span>
             </div>
           </div>

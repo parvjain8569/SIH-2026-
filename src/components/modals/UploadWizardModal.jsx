@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useLanguage } from '../../i18n/LanguageContext';
 
 export default function UploadWizardModal({ onClose, onComplete }) {
+  const { t } = useLanguage();
   const [step, setStep] = useState(1); // 1: Captcha, 2: Upload, 3: OTP
   const [captchaText, setCaptchaText] = useState('');
   const [captchaInput, setCaptchaInput] = useState('');
@@ -34,7 +36,7 @@ export default function UploadWizardModal({ onClose, onComplete }) {
     if (captchaInput.toUpperCase() === captchaText) {
       setStep(2);
     } else {
-      setCaptchaError('Incorrect CAPTCHA. Please try again.');
+      setCaptchaError(t('uploadWizard.captchaError'));
       generateCaptcha();
     }
   };
@@ -57,7 +59,7 @@ export default function UploadWizardModal({ onClose, onComplete }) {
     if (otpInput === '1234') {
       onComplete(selectedFile);
     } else {
-      setOtpError('Invalid OTP. Please enter 1234 for demo.');
+      setOtpError(t('uploadWizard.otpError'));
     }
   };
 
@@ -69,14 +71,14 @@ export default function UploadWizardModal({ onClose, onComplete }) {
         style={{ maxWidth: '480px', textAlign: 'center' }}
       >
         <h3 style={{ fontSize: '20px', fontWeight: 800, color: '#0f172a', margin: '0 0 16px 0' }}>
-          Document Upload Verification
+          {t('uploadWizard.title')}
         </h3>
 
         {/* STEP 1: CAPTCHA */}
         {step === 1 && (
           <form onSubmit={handleCaptchaSubmit}>
             <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '16px' }}>
-              Please complete the security check to proceed with your upload.
+              {t('uploadWizard.captchaDesc')}
             </p>
             <div style={{
               background: '#f1f5f9',
@@ -96,7 +98,7 @@ export default function UploadWizardModal({ onClose, onComplete }) {
             <div style={{ marginBottom: '16px' }}>
               <input
                 type="text"
-                placeholder="Enter text shown above"
+                placeholder={t('uploadWizard.captchaPlaceholder')}
                 value={captchaInput}
                 onChange={(e) => setCaptchaInput(e.target.value)}
                 style={{
@@ -113,10 +115,10 @@ export default function UploadWizardModal({ onClose, onComplete }) {
             </div>
             <div style={{ display: 'flex', gap: '10px' }}>
               <button type="button" className="btn-how-it-works-downward" style={{ flex: 1 }} onClick={onClose}>
-                Cancel
+                {t('uploadWizard.cancel')}
               </button>
               <button type="submit" className="btn-upload-primary" style={{ flex: 1, justifyContent: 'center' }}>
-                Verify & Continue
+                {t('uploadWizard.verifyContinue')}
               </button>
             </div>
           </form>
@@ -126,7 +128,7 @@ export default function UploadWizardModal({ onClose, onComplete }) {
         {step === 2 && (
           <div>
             <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '16px' }}>
-              Select the land document you wish to digitize and verify.
+              {t('uploadWizard.uploadDesc')}
             </p>
             
             <input
@@ -154,8 +156,8 @@ export default function UploadWizardModal({ onClose, onComplete }) {
                   <polyline points="17 8 12 3 7 8" />
                   <line x1="12" y1="3" x2="12" y2="15" />
                 </svg>
-                <p style={{ margin: 0, fontWeight: 600, color: '#334155' }}>Click to browse files</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>PDF, JPG, PNG (Max 5MB)</p>
+                <p style={{ margin: 0, fontWeight: 600, color: '#334155' }}>{t('uploadWizard.browseFiles')}</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>{t('uploadWizard.supportedFormats')}</p>
               </div>
             ) : (
               <div style={{
@@ -184,14 +186,14 @@ export default function UploadWizardModal({ onClose, onComplete }) {
                   onClick={() => setSelectedFile(null)}
                   style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}
                 >
-                  Remove
+                  {t('uploadWizard.remove')}
                 </button>
               </div>
             )}
 
             <div style={{ display: 'flex', gap: '10px' }}>
               <button type="button" className="btn-how-it-works-downward" style={{ flex: 1 }} onClick={onClose}>
-                Cancel
+                {t('uploadWizard.cancel')}
               </button>
               <button 
                 type="button" 
@@ -200,7 +202,7 @@ export default function UploadWizardModal({ onClose, onComplete }) {
                 onClick={handleFileSubmit}
                 disabled={!selectedFile}
               >
-                Submit Document
+                {t('uploadWizard.submitDoc')}
               </button>
             </div>
           </div>
@@ -210,17 +212,17 @@ export default function UploadWizardModal({ onClose, onComplete }) {
         {step === 3 && (
           <form onSubmit={handleOtpSubmit}>
             <p style={{ fontSize: '14px', color: '#4b5563', marginBottom: '8px' }}>
-              To verify this upload, please enter the OTP sent to your registered mobile number.
+              {t('uploadWizard.otpDesc')}
             </p>
             <p style={{ fontSize: '12px', color: '#059669', marginBottom: '16px', fontWeight: 600 }}>
-              (Demo OTP: 1234)
+              {t('uploadWizard.otpDemo')}
             </p>
             
             <div style={{ marginBottom: '16px' }}>
               <input
                 type="text"
                 maxLength="4"
-                placeholder="Enter 4-digit OTP"
+                placeholder={t('uploadWizard.otpPlaceholder')}
                 value={otpInput}
                 onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, ''))}
                 style={{
@@ -239,10 +241,10 @@ export default function UploadWizardModal({ onClose, onComplete }) {
             
             <div style={{ display: 'flex', gap: '10px' }}>
               <button type="button" className="btn-how-it-works-downward" style={{ flex: 1 }} onClick={() => setStep(2)}>
-                Back
+                {t('uploadWizard.back')}
               </button>
               <button type="submit" className="btn-upload-primary" style={{ flex: 1, justifyContent: 'center' }}>
-                Verify & Upload
+                {t('uploadWizard.verifyUpload')}
               </button>
             </div>
           </form>

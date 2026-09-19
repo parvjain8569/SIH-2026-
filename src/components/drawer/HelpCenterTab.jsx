@@ -1,33 +1,30 @@
 import { useState } from 'react'
+import { useLanguage } from '../../i18n/LanguageContext'
 
-const FAQS = [
+const getFaqs = (t) => [
   {
     id: 'faq1',
-    question: '1. How does Mobile OTP Verification work for Landholder Profiles?',
-    answer:
-      'Before uploading and digitizing official land records, users must verify their identity with a 10-digit mobile number. Enter your number in the Profile tab, click "Verify via OTP", and enter the 6-digit confirmation code. Once verified, your account is immediately unlocked for document processing.',
+    question: t('help.faq1Q'),
+    answer: t('help.faq1A'),
   },
   {
     id: 'faq2',
-    question: '2. Which land document formats are supported?',
-    answer:
-      'BhoomIntelli supports PDF, JPG, PNG, and scanned DOCX records. The intelligent OCR pipeline is specifically optimized for Indian revenue documents, including Khasra, Khatauni, Jamabandi, and registered Sale Deeds in regional scripts.',
+    question: t('help.faq2Q'),
+    answer: t('help.faq2A'),
   },
   {
     id: 'faq3',
-    question: '3. Why are Email and Phone secured in the Profile section?',
-    answer:
-      'For land record security and fraud prevention, critical identifiers (Email & Mobile Number) cannot be casually overwritten without OTP verification. This ensures audit trails and prevents unauthorized modifications.',
+    question: t('help.faq3Q'),
+    answer: t('help.faq3A'),
   },
   {
     id: 'faq4',
-    question: '4. What does "Needs Review" status mean?',
-    answer:
-      '"Needs Review" indicates that the uploaded document had partial ink fading or a slight boundary discrepancy with the cadastral GIS map. Our system automatically highlights the affected fields for officer cross-verification.',
+    question: t('help.faq4Q'),
+    answer: t('help.faq4A'),
   },
 ]
 
-const SUPPORT_CHANNELS = [
+const getSupportChannels = (t) => [
   {
     href: 'mailto:support@bhoomintelli.gov.in',
     iconBg: '#ffffff',
@@ -41,7 +38,7 @@ const SUPPORT_CHANNELS = [
         <path fill="#ea4335" d="M72 74V48l24 18 24-18v26L96 92z" />
       </svg>
     ),
-    label: 'Official Email Support',
+    label: t('help.emailSupport'),
     value: 'support@bhoomintelli.gov.in',
   },
   {
@@ -53,7 +50,7 @@ const SUPPORT_CHANNELS = [
         <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2m.01 1.67c2.2 0 4.26.86 5.82 2.42a8.225 8.225 0 0 1 2.41 5.83c0 4.54-3.7 8.24-8.24 8.24-1.48 0-2.93-.4-4.2-1.15l-.3-.18-3.12.82.83-3.04-.2-.31a8.19 8.19 0 0 1-1.26-4.38c0-4.54 3.7-8.24 8.24-8.24m4.52 11.66c-.25-.13-1.47-.72-1.7-.81-.23-.08-.39-.13-.56.13-.17.25-.64.81-.79.97-.14.17-.29.19-.54.06-.25-.13-1.06-.39-2.02-1.25-.75-.67-1.26-1.5-1.4-1.76-.15-.25-.02-.39.11-.51.11-.11.25-.29.37-.44.13-.15.17-.25.25-.42.08-.17.04-.31-.02-.44-.06-.13-.56-1.35-.77-1.85-.2-.49-.41-.42-.56-.43h-.48c-.17 0-.44.06-.67.31-.23.25-.88.86-.88 2.1 0 1.24.9 2.44 1.03 2.61.13.17 1.77 2.71 4.3 3.8 2.53 1.09 2.53.73 2.98.69.46-.04 1.47-.6 1.68-1.18.21-.59.21-1.09.15-1.18-.06-.1-.23-.17-.48-.29"/>
       </svg>
     ),
-    label: 'WhatsApp Helpdesk',
+    label: t('help.whatsapp'),
     value: '+00 0000000000',
   },
   {
@@ -65,7 +62,7 @@ const SUPPORT_CHANNELS = [
         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
       </svg>
     ),
-    label: 'X (Twitter) Updates',
+    label: t('help.twitter'),
     value: '@BhoomIntelli',
   },
   {
@@ -85,28 +82,32 @@ const SUPPORT_CHANNELS = [
         <path fill="url(#ig-grad-help)" d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
       </svg>
     ),
-    label: 'Portal Community',
+    label: t('help.community'),
     value: '@bhoomintelli',
   },
 ]
 
 export default function HelpCenterTab() {
+  const { t } = useLanguage()
   const [openFaq, setOpenFaq] = useState('faq1')
+
+  const faqs = getFaqs(t)
+  const supportChannels = getSupportChannels(t)
 
   return (
     <div className="help-center-tab-content">
       <div className="help-center-header">
         <h3 style={{ margin: '0 0 6px 0', fontSize: '20px', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.3px' }}>
-          BhoomIntelli Help Center &amp; Support
+          {t('help.title')}
         </h3>
         <p style={{ margin: '0 0 24px 0', fontSize: '14px', color: '#64748b', lineHeight: 1.5 }}>
-          Find answers to common questions about document OCR, identity verification, and state registry integration.
+          {t('help.subtitle')}
         </p>
       </div>
 
       {/* FAQ Accordions */}
       <div className="faq-list-container">
-        {FAQS.map((faq) => (
+        {faqs.map((faq) => (
           <div key={faq.id} className="help-guide-card">
             <div
               className="help-guide-header"
@@ -124,10 +125,10 @@ export default function HelpCenterTab() {
 
       {/* Support Channels */}
       <h4 style={{ margin: '28px 0 14px 0', fontSize: '16px', fontWeight: 800, color: '#0f172a' }}>
-        Official Helpdesk &amp; Support Channels
+        {t('help.supportChannels')}
       </h4>
       <div className="help-channels-grid">
-        {SUPPORT_CHANNELS.map((ch) => (
+        {supportChannels.map((ch) => (
           <a
             key={ch.label}
             href={ch.href}

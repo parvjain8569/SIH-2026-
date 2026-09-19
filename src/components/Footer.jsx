@@ -1,5 +1,9 @@
+import React from 'react'
+import { useLanguage } from '../i18n/LanguageContext'
+
 // Footer: Modern BhoomIntelli portal footer
 export default function Footer() {
+  const { t } = useLanguage()
   return (
     <footer className="bhoomi-footer">
       <div className="bhoomi-footer-container">
@@ -17,12 +21,12 @@ export default function Footer() {
             />
           </div>
           <span className="bhoomi-footer-sep">·</span>
-          <span className="bhoomi-footer-desc">Intelligent Land Record Digitization &amp; Validation System</span>
+          <span className="bhoomi-footer-desc">{t('footer.desc')}</span>
         </div>
         <div className="bhoomi-footer-right">
-          <span>Digital India Initiative</span>
+          <span>{t('footer.digitalIndia')}</span>
           <span className="bhoomi-footer-sep">·</span>
-          <span>Security &amp; Spatial Alignment</span>
+          <span>{t('footer.security')}</span>
         </div>
       </div>
     </footer>
