@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import DashboardHome from './pages/DashboardHome.jsx'
 import RecordsPage from './pages/RecordsPage.jsx'
 import UsersPage from './pages/UsersPage.jsx'
@@ -69,6 +69,85 @@ const NAV_ITEMS = [
 export default function AdminDashboard({ user, onLogout }) {
   const [activePage, setActivePage] = useState('dashboard')
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [notificationsOpen, setNotificationsOpen] = useState(false)
+  const [notifications, setNotifications] = useState([
+    {
+      id: 'notif-1',
+      type: 'discrepancy',
+      title: 'Discrepancy Alert: Parv Jain (Deed-142)',
+      desc: 'Citizen altered plot area from 2.10 Ha to 2.40 Ha. Urgent audit required.',
+      time: '12 mins ago',
+      unread: true,
+      recordId: 'REC-28452',
+      badge: 'Discrepancy',
+      badgeClass: 'red'
+    },
+    {
+      id: 'notif-2',
+      type: 'review',
+      title: 'New Submission: Sunita Devi (Khatauni)',
+      desc: 'Record REC-28450 for Varanasi District uploaded and queued for audit.',
+      time: '1 hour ago',
+      unread: true,
+      recordId: 'REC-28450',
+      badge: 'New Upload',
+      badgeClass: 'yellow'
+    },
+    {
+      id: 'notif-3',
+      type: 'dispute',
+      title: 'Disputed Survey Claim: Priya Patel',
+      desc: 'Overlapping survey claim on Khasra 22/5 in Ahmedabad, Gujarat.',
+      time: '3 hours ago',
+      unread: true,
+      recordId: 'REC-28448',
+      badge: 'Disputed',
+      badgeClass: 'red'
+    },
+    {
+      id: 'notif-4',
+      type: 'system',
+      title: 'Cadastral Registry Sync Complete',
+      desc: '1,420 land records successfully verified & synced with state nodes.',
+      time: '5 hours ago',
+      unread: false,
+      badge: 'System',
+      badgeClass: 'green'
+    }
+  ])
+
+  const notifRef = useRef(null)
+
+  // Click outside to close notification dropdown
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (notifRef.current && !notifRef.current.contains(event.target)) {
+        setNotificationsOpen(false)
+      }
+    }
+    if (notificationsOpen) {
+      document.addEventListener('mousedown', handleClickOutside)
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [notificationsOpen])
+
+  const unreadCount = notifications.filter(n => n.unread).length
+
+  const markAllAsRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, unread: false })))
+  }
+
+  const handleNotificationClick = (notif) => {
+    // Mark this specific notification as read
+    setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, unread: false } : n))
+    setNotificationsOpen(false)
+    // If it relates to a record, open the records page
+    if (notif.recordId) {
+      setActivePage('records')
+    }
+  }
 
   const pageTitle = NAV_ITEMS.find(item => item.id === activePage)?.label || 'Dashboard'
 
@@ -157,14 +236,84 @@ export default function AdminDashboard({ user, onLogout }) {
           </div>
 
           <div className="admin-topbar-right">
-            {/* Notification Bell */}
-            <button className="admin-topbar-bell" title="Notifications">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-              <span className="admin-topbar-bell-dot" />
-            </button>
+            {/* ── Notification Bell with Dropdown ── */}
+            <div className="admin-notif-wrapper" ref={notifRef}>
+              <button 
+                className={`admin-topbar-bell ${notificationsOpen ? 'active' : ''}`} 
+                title="Notifications"
+                onClick={() => setNotificationsOpen(!notificationsOpen)}
+                aria-label="Notifications"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                  <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                </svg>
+                {unreadCount > 0 && (
+                  <span className="admin-topbar-bell-dot">
+                    <span className="admin-bell-ping" />
+                  </span>
+                )}
+              </button>
+
+              {/* Dropdown Menu */}
+              {notificationsOpen && (
+                <div className="admin-notif-dropdown">
+                  <div className="admin-notif-header">
+                    <div className="admin-notif-title-row">
+                      <span className="admin-notif-heading">Notifications</span>
+                      {unreadCount > 0 && (
+                        <span className="admin-notif-count-badge">{unreadCount} new</span>
+                      )}
+                    </div>
+                    {unreadCount > 0 && (
+                      <button className="admin-notif-mark-read" onClick={markAllAsRead}>
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="admin-notif-list">
+                    {notifications.length === 0 ? (
+                      <div className="admin-notif-empty">No notifications right now.</div>
+                    ) : (
+                      notifications.map(notif => (
+                        <div 
+                          key={notif.id} 
+                          className={`admin-notif-item ${notif.unread ? 'unread' : ''}`}
+                          onClick={() => handleNotificationClick(notif)}
+                        >
+                          <div className="admin-notif-item-top">
+                            <span className={`admin-notif-tag ${notif.badgeClass}`}>
+                              {notif.badge}
+                            </span>
+                            <span className="admin-notif-time">{notif.time}</span>
+                          </div>
+                          <h4 className="admin-notif-item-title">{notif.title}</h4>
+                          <p className="admin-notif-item-desc">{notif.desc}</p>
+                          {notif.recordId && (
+                            <div className="admin-notif-action-hint">
+                              Click to view in Audit Registry ➔
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+
+                  <div className="admin-notif-footer">
+                    <button 
+                      className="admin-notif-footer-btn"
+                      onClick={() => {
+                        setActivePage('records')
+                        setNotificationsOpen(false)
+                      }}
+                    >
+                      View All Records in Audit Registry
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
 
             {/* Admin User Pill */}
             <div className="admin-topbar-user">

@@ -1,312 +1,147 @@
-# PROJECT CONTEXT — BhoomiSetu / BhoomiIntelli
-> AI ONBOARDING FILE — Upload this to any AI assistant to get full project context instantly.
-> Last Updated: 2026-09-17
-> Always keep this file in sync with the actual codebase.
+# PROJECT CONTEXT — BhoomiIntelli Admin Portal
+> AI ONBOARDING FILE — Upload or reference this file to get 100% full context on the Admin Portal.
+> Last Updated: 2026-09-19
+> Always keep this file in sync with every modification to the Admin Portal codebase.
 
 ---
 
-## 1. WHAT IS THIS PROJECT?
+## 1. WHAT IS THE ADMIN PORTAL?
 
-BhoomiSetu (meaning "Land Bridge" in Hindi) is a Smart India Hackathon (SIH) prototype for digitizing and verifying land records in India using AI-OCR, Blockchain verification, and Biometric OTP authentication.
+The **BhoomiIntelli Admin Portal** is an administrative dashboard for the BhoomiSetu / BhoomiIntelli land record digitization platform (Smart India Hackathon Prototype).
 
-The app is also branded as "BhoomiIntelli" in some UI elements.
-
-**Core problem being solved**: Indian land records are mostly paper-based, easily forged, and disconnected across states. BhoomiSetu digitizes physical land documents, extracts data via AI-OCR, stores it on blockchain for tamper-proof verification, and links it to the government cadastral registry.
-
-**Current status**: This is a prototype/demo — the frontend uses simulated data, and the backend API exists but is not yet connected to the frontend.
+While the citizen-facing app (`landrecord/`) allows citizens to sign in, upload land deed documents, and review AI-extracted fields, the **Admin Portal** (`Admin Portal/`) empowers revenue authorities, tehsildars, sub-registrars, and land auditors to:
+1. **Audit Citizen Submissions**: Inspect documents uploaded by citizens (e.g. Parv Jain, Ravi Sharma, Sunita Devi).
+2. **Tri-Pane Split-Screen Verification**: View the original legal deed on the left 1/3 of the screen, AI-OCR extracted details in the center 1/3, and what the citizen accepted/altered alongside admin audit controls on the right 1/3.
+3. **Discrepancy Resolution**: Detect when citizens alter values that contradict the deed (such as claiming 2.40 Hectares when the deed states 2.10 Hectares).
+4. **Official Record Grading**: Categorize records into color-coded tiers:
+   - 🟢 **Good / Verified (Green)**: Clean, legitimate, matching registry.
+   - 🟡 **Under Review / Needs Attention (Yellow)**: Minor discrepancy or low OCR confidence requiring secondary check.
+   - 🔴 **Flagged / High Risk (Red)**: Serious mismatch, altered boundaries, or disputed title.
+   - 🔵 **Pending Queue (Blue)**: Unprocessed queue items.
+5. **Issue Formal Decisions**: One-click **Approve & Digitally Sign**, **Issue Discrepancy Notice to Citizen** (with automated SMS/email notice draft), or **Reject Record**.
 
 ---
 
-## 2. TECH STACK
+## 2. CREDENTIALS & DEMO ACCESS
 
-### Frontend
+- **Email / ID**: `admin@bhoomintelli.in`
+- **Password**: `Admin@123`
+- **Security Features**:
+  - 3-attempt lockout (locks the account for 60 seconds after 3 failed attempts).
+  - Password visibility toggle.
+  - Floating **Dev Mode pill** at bottom-right (persisted in `localStorage.adminDevMode`).
+  - When Dev Mode is enabled, an **"⚡ Auto-Fill Demo Credentials"** button appears on the login screen to populate the fields with a single click.
+
+---
+
+## 3. TECH STACK
+
 - **Framework**: React 19 (via Vite 8)
-- **Build tool**: Vite
-- **Language**: JavaScript (JSX)
-- **Styling**: Plain CSS (no Tailwind, no CSS-in-JS)
-- **State management**: React useState/useRef only (no Redux, no Zustand)
-- **Routing**: No router library — page switching is done with a simple `currentPage` state in App.jsx
-- **Entry**: src/main.jsx -> src/App.jsx
-
-### Backend
-- **Runtime**: Node.js with Express
-- **Language**: JavaScript (ES Modules)
-- **Database**: Flat file (records.json) — no real DB yet
-- **Port**: 5000
-- **CORS**: Enabled for all origins
-
-### No external API calls currently — everything is mocked client-side.
+- **Language**: JavaScript (JSX, ES Modules)
+- **Styling**: Pure Vanilla CSS (`src/admin.css` & `src/index.css`) — NO Tailwind, NO bootstrap, NO CSS-in-JS.
+- **State Management**: Clean React `useState` / `useEffect` / `useRef` only (no external Redux/Zustand libraries).
+- **Icons**: Custom inline SVGs for zero latency and crisp rendering on all screens.
+- **Port**: Runs on `http://localhost:5174` (allowing simultaneous side-by-side execution with the main citizen portal running on `http://localhost:5173`).
 
 ---
 
-## 3. PROJECT STRUCTURE
+## 4. DIRECTORY & FILE GUIDE
 
 ```
-landrecord/
-├── index.html                    # HTML shell with <div id="root">
-├── package.json                  # Frontend deps (React 19, Vite 8)
-├── package-lock.json             # Lockfile for deterministic installs
-├── vite.config.js                # Vite + React plugin config
-├── postcss.config.js             # PostCSS config
-├── .oxlintrc.json                # Oxlint config
-├── .gitignore                    # Git ignore rules
-├── NOTES.md                      # Dev notes — file-by-file explanations
-├── PROJECT_CONTEXT.md            # THIS FILE — AI onboarding context
-├── GIT_PUSH_GUIDE.md             # Which files to push for teammates
-├── README.md                     # Basic project readme
+Admin Portal/
+├── index.html                   # HTML template loading Google Fonts (Plus Jakarta Sans & Inter)
+├── package.json                 # Dependencies (react, react-dom, vite, @vitejs/plugin-react)
+├── vite.config.js               # Vite build configuration (port 5174)
+├── README.md                    # Public user & setup documentation
+├── PROJECT_CONTEXT.md           # THIS FILE — AI master reference
+├── NOTES.md                     # File-by-file developer reference
+├── AI_NOTES.md                  # Workflow, rules, and AI architectural notes
+├── GIT_PUSH_GUIDE.md            # Git commit and push reference
+├── notes.txt                    # Plaintext companion notes
 │
-├── public/                       # Static assets served as-is by Vite
-│   ├── bhoomintelli-icon.png     # Square logo icon (favicon/PWA)
-│   ├── bhoomintelli-wordmark.png # Full horizontal logo
-│   ├── favicon.svg               # SVG favicon for browser tab
-│   └── icons.svg                 # Shared SVG sprite for UI icons
+├── public/                      # Static assets
+│   ├── bhoomintelli-icon.png    # High-res square logo icon
+│   ├── bhoomintelli-wordmark.png # Horizontal brand wordmark
+│   └── favicon.svg              # Browser tab icon
 │
-├── src/
-│   ├── main.jsx                  # Entry: mounts <App /> in StrictMode
-│   ├── App.jsx                   # Root router: switches between website/auth pages
-│   ├── index.css                 # Global CSS reset
-│   ├── App.css                   # Minimal .app-root styles
-│   │
-│   ├── website.jsx               # Main landing page + dashboard (Home & My Records views)
-│   ├── website.css               # All styles for website.jsx and child components (~78 KB)
-│   ├── login.jsx                 # Auth page: signin, register, OTP, forgot password
-│   ├── login.css                 # All styles for login.jsx
-│   │
-│   ├── assets/
-│   │   ├── bhoomintelli-icon.png       # Square logo icon
-│   │   ├── bhoomintelli-wordmark.png   # Full horizontal logo
-│   │   ├── hero.png                    # Hero section image
-│   │   ├── react.svg                   # Default Vite React logo (unused)
-│   │   └── vite.svg                    # Default Vite logo (unused)
-│   │
-│   ├── components/
-│   │   ├── Navbar.jsx                  # Top navigation bar
-│   │   ├── HeroSection.jsx             # Split-screen hero with upload CTA
-│   │   ├── FeaturesSection.jsx         # 4-card technology features grid
-│   │   ├── ThreeStepsSection.jsx       # "How It Works" 3-step section
-│   │   ├── ImpactSection.jsx           # Statistics/impact numbers strip
-│   │   ├── TransformationFlow.jsx      # Paper -> Digital flow diagram
-│   │   ├── Footer.jsx                  # Site footer
-│   │   ├── MyRecordsSection.jsx        # My Records dashboard view
-│   │   ├── FetchingDetailsOverlay.jsx  # Post-upload animated "AI extracting" spinner overlay
-│   │   ├── DocumentReviewPage.jsx      # AI-extracted fields review page with document preview
-│   │   ├── CaptchaModal.jsx            # Canvas-drawn CAPTCHA verification modal
-│   │   │
-│   │   ├── drawer/
-│   │   │   ├── MenuDrawer.jsx          # Slide-in side drawer shell with tabs
-│   │   │   ├── ProfileTab.jsx          # Edit profile + phone OTP verification
-│   │   │   ├── NotificationsTab.jsx    # In-app notifications list
-│   │   │   ├── SettingsTab.jsx         # App settings toggles
-│   │   │   ├── HelpCenterTab.jsx       # FAQ / help content
-│   │   │   └── AboutUsTab.jsx          # About BhoomiSetu / SIH info
-│   │   │
-│   │   └── modals/
-│   │       ├── AuthRequiredModal.jsx   # Shown to guest when they try to upload
-│   │       ├── UploadWizardModal.jsx   # Multi-step file upload wizard
-│   │       └── RecordDetailsModal.jsx  # Processing spinner + record details view
-│   │
-│   ├── utils/
-│   │   └── userUtils.js               # extractCleanUsername() + formatDisplayName()
-│   │
-│   └── pages/                         # EMPTY — reserved for future page components
-│
-└── backend/
-    ├── server.js                      # Express API (port 5000)
-    ├── records.json                   # Flat-file records database
-    └── package.json                   # Backend deps (express, cors)
+└── src/                         # Application source code
+    ├── main.jsx                 # Entry point, mounts React root
+    ├── App.jsx                  # Top-level shell, handles auth state & Dev Mode toggle
+    ├── index.css                # Global CSS variables, fonts, resets
+    ├── admin.css                # Master CSS file (~1,500 lines, all admin-* classes)
+    ├── AdminLogin.jsx           # Secure login component with lockout & auto-fill
+    ├── AdminDashboard.jsx       # Main layout: sidebar, topbar with notification center & active page router
+    │
+    ├── components/
+    │   └── RecordAuditStudio.jsx # 3-column verification split view (1/3 : 1/3 : 1/3)
+    │
+    └── pages/
+        ├── DashboardHome.jsx    # Metric cards, quick actions, recent audit activity feed
+        ├── RecordsPage.jsx      # Records table, search, category filter pills & audit trigger
+        ├── UsersPage.jsx        # Registered citizens, role management & status toggles
+        ├── AnalyticsPage.jsx    # Verification throughput, state-wise volume & export reports
+        └── SettingsPage.jsx     # Admin profile, security keys & system diagnostics
 ```
 
 ---
 
-## 4. KEY STATE & DATA MODEL
+## 5. TRI-PANE VERIFICATION ARCHITECTURE (`RecordAuditStudio.jsx`)
 
-### App.jsx state (top-level)
-```js
-currentPage: 'website' | 'auth'    // Which page to show
-currentUser: null | { name, username, email }   // Logged in user
-authMode: 'signin' | 'create'      // Which auth view to open
-```
+The Tri-Pane Verification Studio is the core administrative feature of the portal:
 
-### website.jsx state (main page)
-```js
-activeNav: 'Home' | 'My Records'   // Which main view is active
-isDrawerOpen: boolean               // Side drawer open/closed
-activeDrawerTab: 'profile' | 'notification' | 'settings' | 'help' | 'about'
-profileData: {
-  name, email, contact, district, state,
-  isPhoneVerified: boolean
-}
-records: Array<Record>              // All land records (in-memory)
-notifications: Array<Notification> // In-app notifications
-showModal: boolean                  // RecordDetailsModal visibility
-isProcessing: boolean               // Show spinner vs record details in modal
-showAuthPromptModal: boolean        // AuthRequiredModal visibility
-showUploadWizard: boolean           // UploadWizardModal visibility
-lastUploadedDoc: { name, size, uploadTime } | null
-selectedRecordForModal: Record | null
-verificationAlert: boolean          // Show phone verification warning
+### Pane 1: Original Document Viewer (Left 1/3)
+- Realistic digital replica of Indian Land Deed (Deed of Conveyance & Title Transfer / Form 7/12).
+- Contains official emblems, Sub-Registrar seals, stamps, signature lines, and SHA-256 integrity hash.
+- Controls: Zoom In (`+`), Zoom Out (`-`), and Reset Zoom (`↺`).
+- Hotspot synchronization: Hovering on any extracted field in Pane 2 activates the corresponding highlight on the document in Pane 1!
 
-// Post-upload pipeline states
-showFetchingOverlay: boolean        // FetchingDetailsOverlay visibility
-showDocumentReview: boolean         // DocumentReviewPage visibility
-showCaptcha: boolean                // CaptchaModal visibility
-```
+### Pane 2: AI OCR Extraction (Middle 1/3)
+- Shows AI OCR model metrics (e.g. `Bhoomi-Vision v3.2`, Average Confidence: `94.2%`).
+- Extracted field cards: Owner Name, Khasra/Survey No, Plot Area, Deed Date, Mutation ID.
+- Color-coded confidence badges:
+  - 🟢 High Confidence: `90%+`
+  - 🟡 Medium Confidence: `70% - 89%`
+  - 🔴 Low Confidence: `<70%`
+- Warning callouts (e.g., discrepancies between printed text and handwritten notes).
 
-### Record data shape
-```js
-{
-  id: 'REC-XXXXX',
-  ownerName: string,
-  parcelId: 'HR-XXXXX',
-  khasraNo: 'XX/X',
-  district: string,
-  state: string,
-  area: '1.45 Hectares',
-  date: 'DD Mon YYYY',
-  status: 'Verified',
-  documentName: string,
-  fileSize: string,
-  isNew: boolean    // true only for just-uploaded records
-}
-```
+### Pane 3: Citizen Review & Admin Decision Matrix (Right 1/3)
+- **Citizen Action Tracking**: Displays what the citizen did during their self-review (e.g. `ACCEPTED`, `MODIFIED`, or `FLAGGED`).
+- **Discrepancy Detection**: Side-by-side comparison between OCR value and citizen submitted value. Highlights modifications with red/amber badges and displays citizen remarks.
+- **Admin Controls**:
+  - `✓ Pass`: Verifies field against the original deed.
+  - `⚠️ Flag`: Flags field as contested or suspicious.
+  - `✎ Edit`: Allows admin to manually override a field with an official corrected value.
+- **Record Grading**:
+  - Mark entire record as 🟢 **Good (Pass)**, 🟡 **Needs Attention**, or 🔴 **Flagged (High Risk)**.
+- **Verdict Action Bar**:
+  - `Approve & Digitally Sign`: Applies digital seal and marks record Good (Green).
+  - `Issue Discrepancy Notice`: Opens pre-filled notice modal for citizen with registered SMS/email dispatch.
+  - `Reject Record`: Rejects record and logs administrative audit notes.
 
 ---
 
-## 5. USER FLOWS
+## 6. PRIMARY DEMO SCENARIO (`REC-28452` — Parv Jain)
 
-### Flow 1: Guest visits site
-1. App.jsx renders Website (currentPage = 'website', currentUser = null)
-2. User sees: Navbar (with Login button), Hero, Features, Steps, Impact, TransformationFlow, Footer
-3. User clicks Upload -> AuthRequiredModal appears
-4. User clicks "Proceed to Login" -> App.jsx sets currentPage = 'auth'
-
-### Flow 2: User registers
-1. Login page opens in 'create' view
-2. User enters name, email, password -> clicks "Create Account"
-3. OTP view shows (demo OTP displayed on screen)
-4. User enters OTP -> onLoginSuccess({ name, username, email }) called
-5. App.jsx sets currentUser and currentPage = 'website'
-
-### Flow 3: Upload land document (authenticated + phone verified)
-1. User clicks Upload button anywhere
-2. website.jsx checks: user logged in? YES. Phone verified? YES.
-3. UploadWizardModal opens
-4. User picks a file, confirms, clicks Upload
-5. onComplete(file) fires
-6. **FetchingDetailsOverlay** appears (~1.6s animated spinner with progress steps)
-7. **DocumentReviewPage** opens — shows AI-extracted fields with highlighted document text
-8. User reviews each field (accept/reject), then clicks "Confirm & Save"
-9. **CaptchaModal** appears — user must solve canvas-drawn CAPTCHA
-10. CAPTCHA validated → record is finalised
-11. Record added to records[] state, notification added
-12. RecordDetailsModal shows full record details
-13. My Records tab shows new record
-
-### Flow 4: Upload without phone verification
-1. User clicks Upload
-2. website.jsx checks: phone verified? NO
-3. Sets verificationAlert = true, opens drawer to ProfileTab
-4. User sees alert banner telling them to verify phone
-5. User clicks "Verify" in ProfileTab -> OTP flow -> onProfileSave({ isPhoneVerified: true })
-6. Now user can upload
+To demonstrate the full power of the verification system, a realistic test scenario is provided:
+- **Record ID**: `REC-28452`
+- **Citizen / Uploader**: **Parv Jain**
+- **Document**: Deed of Conveyance & Title Transfer (Varanasi/Gurugram)
+- **Khasra**: `128/3` | **Parcel**: `HR-40222`
+- **Initial Status**: `🔴 Flagged / High Risk`
+- **The Discrepancy**:
+  - AI OCR extracted **2.10 Hectares** from deed clause 3.
+  - Citizen Parv Jain altered the plot area to **2.40 Hectares** during upload with remark: *"Physical survey carried out on 14 Aug shows 2.40 Ha boundary including access canal."*
+  - Admin sees the alert banner, verifies against the original deed in Pane 1, can edit the field, issue a clarification notice, or sign off after validation.
 
 ---
 
-## 6. COMPONENT COMMUNICATION (PROP DRILLING MAP)
+## 7. CRITICAL DESIGN RULES FOR ALL FUTURE CHANGES
 
-```
-App.jsx
-  └── Website (user, onLogout, onOpenLogin)
-        └── Navbar (user, unreadCount, onOpenDrawer, onOpenLogin, onLogout, ...)
-        └── MenuDrawer (user, activeTab, profileData, onProfileSave, notifications, ...)
-              └── ProfileTab (profileData, onProfileSave, verificationAlert)
-              └── NotificationsTab (notifications, onMarkAllRead, unreadCount)
-              └── SettingsTab ()
-              └── HelpCenterTab ()
-              └── AboutUsTab ()
-        └── AuthRequiredModal (onClose, onProceedToLogin)
-        └── UploadWizardModal (onClose, onComplete)
-        └── FetchingDetailsOverlay (fileName)
-        └── DocumentReviewPage (onConfirm, onCancel)
-        └── CaptchaModal (onSuccess, onClose)
-        └── RecordDetailsModal (isOpen, isProcessing, lastUploadedDoc, selectedRecord, onClose, onNavigateToRecords)
-        └── HeroSection (user, lastUploadedDoc, onUpload, onScrollToSteps, onViewRecords)
-        └── FeaturesSection ()
-        └── ThreeStepsSection (ref)
-        └── ImpactSection ()
-        └── TransformationFlow ()
-        └── MyRecordsSection (records, onUpload, onViewRecord)
-        └── Footer ()
-```
-
----
-
-## 7. BACKEND API REFERENCE
-
-> NOTE: Currently not called by the frontend. For future integration.
-
-### GET /api/records
-Returns all land records from records.json.
-Response: `{ success: true, records: [...] }`
-
-### POST /api/upload
-Body: `{ fileName, fileSize, ownerName }`
-Simulates OCR processing, creates a new record, saves to records.json.
-Response: `{ success: true, message: '...', record: {...} }`
-
-### GET /api/records/:id
-Returns a single record by ID.
-Response: `{ success: true, record: {...} }` or 404.
-
----
-
-## 8. CSS CLASS NAMING CONVENTIONS
-
-- **Global**: `.app-root` (App.jsx)
-- **Website/Landing page**: `.bhoomi-*` (e.g. `.bhoomi-container`, `.bhoomi-navbar`, `.bhoomi-modal`, `.bhoomi-modal-overlay`)
-- **Auth/Login page**: `.auth-*` (e.g. `.auth-form`, `.auth-input`, `.auth-btn-primary`, `.auth-otp-input`)
-- **Post-upload pipeline**: `.fetching-*` (FetchingDetailsOverlay), `.doc-review-*` (DocumentReviewPage), `.captcha-*` (CaptchaModal)
-- **No CSS frameworks** are used. All styles are hand-written in the respective `.css` files.
-
----
-
-## 9. KNOWN ISSUES & LIMITATIONS
-
-1. **No real auth** — Login is 100% client-side. There is no JWT, no session, no backend auth endpoint.
-2. **Demo OTP** — The OTP is generated client-side and shown on screen (for demo purposes only).
-3. **No persistent data** — All records and notifications are lost on page refresh (stored only in React state).
-4. **Backend disconnected** — The Express server exists but the frontend makes zero API calls. All data is mocked.
-5. **No routing library** — Navigation between "Home" and "My Records" is done with a simple `activeNav` state variable, not React Router.
-6. **pages/ folder is empty** — It was intended for future separate pages but nothing is there yet.
-7. **DocumentReviewPage uses fixed demo data** — The AI-extracted fields are hardcoded, not real OCR output.
-8. **CaptchaModal is client-side only** — The CAPTCHA is generated and validated in the browser, not server-validated.
-
----
-
-## 10. HOW TO RUN THE PROJECT
-
-### Frontend
-```bash
-cd landrecord
-npm install
-npm run dev
-# Opens at http://localhost:5173
-```
-
-### Backend (optional, not connected to frontend yet)
-```bash
-cd landrecord/backend
-npm install
-node server.js
-# Runs at http://localhost:5000
-```
-
----
-
-## 11. IMPORTANT RULES FOR THIS PROJECT
-
-1. Always update NOTES.md, PROJECT_CONTEXT.md, and GIT_PUSH_GUIDE.md when making any change.
-2. CSS class names follow the `bhoomi-*` (website), `auth-*` (login), `fetching-*`, `doc-review-*`, `captcha-*` convention — do not break this.
-3. No routing library — page switching uses the `currentPage` state in App.jsx.
-4. No state management library — use React useState only.
-5. No CSS frameworks — write plain CSS only.
+1. **CSS Prefix Rule**: Every CSS class in the Admin Portal must use `admin-*` or `admin-audit-*` prefixes. Never use `bhoomi-*` or `auth-*` (reserved for citizen site).
+2. **Zero Framework Rule**: Do not install or import Tailwind, Bootstrap, Material-UI, or Lucide-react. Keep bundle sizes featherlight using clean vanilla CSS and inline SVGs.
+3. **Always Update Documentation**: Whenever a component, state variable, or feature is added or updated in the Admin Portal, immediately update:
+   - `Admin Portal/NOTES.md`
+   - `Admin Portal/AI_NOTES.md`
+   - `Admin Portal/PROJECT_CONTEXT.md`
+   - `Admin Portal/README.md`
+   - `Admin Portal/GIT_PUSH_GUIDE.md`
