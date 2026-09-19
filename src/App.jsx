@@ -1,117 +1,88 @@
-import { useState } from 'react'
-import Login from './login.jsx'
-import Website from './website.jsx'
-import LanguageSelectModal from './components/modals/LanguageSelectModal.jsx'
-import './login.css'
-import './App.css'
+import { useState, useEffect } from 'react'
+import AdminLogin from './AdminLogin.jsx'
+import AdminDashboard from './AdminDashboard.jsx'
+import './admin.css'
 
 export default function App() {
-  const getDevUser = () => ({
-    email: 'dev@bhoomintelli.in',
-    name: 'Dev User',
-    username: 'devuser',
-    aadhaarVerified: true,
-    aadhaarDetails: {
-      aadhaarNumber: '234567891234',
-      formattedAadhaar: '2345 6789 1234',
-      maskedAadhaar: 'XXXX XXXX 1234',
-      name: 'Dev User',
-      dob: '15/06/1995',
-      gender: 'Male',
-      address: 'Village Khandsa, Gurugram',
-      district: 'Gurugram',
-      state: 'Haryana',
-      pincode: '122001',
-      contact: '9876543210',
-    }
+  // ── Dev Mode Admin Data ──
+  const getDevAdmin = () => ({
+    name: 'Admin Dev',
+    email: 'admin@bhoomintelli.in',
+    role: 'Super Admin',
+    phone: '+91 98765 43210',
+    department: 'Land Records Division',
+    joinDate: '15 Jan 2025',
   })
 
-  // Default to 'website' when opening the site as requested!
-  const [currentPage, setCurrentPage] = useState('website')
-  const [devMode, setDevMode] = useState(() => localStorage.getItem('devMode') === 'true')
-  
-  const [currentUser, setCurrentUser] = useState(() => {
-    return localStorage.getItem('devMode') === 'true' ? getDevUser() : null
+  // ── Auth State (persisted in localStorage) ──
+  const [adminUser, setAdminUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('adminUser')
+      if (saved) return JSON.parse(saved)
+    } catch { /* ignore */ }
+    // Auto-login if dev mode was on
+    if (localStorage.getItem('adminDevMode') === 'true') return getDevAdmin()
+    return null
   })
-  
-  const [authMode, setAuthMode] = useState('signin') // 'signin' or 'create'
-  // Always show language popup modal as soon as website opens so user doesn't have to search for option
-  const [showLangModal, setShowLangModal] = useState(true)
+
+  // ── Dev Mode Toggle ──
+  const [devMode, setDevMode] = useState(
+    () => localStorage.getItem('adminDevMode') === 'true'
+  )
 
   const toggleDevMode = () => {
     const next = !devMode
     setDevMode(next)
-    localStorage.setItem('devMode', String(next))
-    window.dispatchEvent(new Event('devModeChange'))
-    
+    localStorage.setItem('adminDevMode', String(next))
+    window.dispatchEvent(new Event('adminDevModeChange'))
+
     if (next) {
-      handleLoginSuccess(getDevUser())
+      handleLoginSuccess(getDevAdmin())
     } else {
       handleLogout()
     }
   }
 
-  // Called when user clicks "Login" or is asked to login before upload
-  const handleOpenLogin = (mode = 'signin') => {
-    setAuthMode(mode)
-    setCurrentPage('auth')
-  }
-
-  // Called when sign in succeeds -> leads to website as authenticated user
+  // ── Auth Handlers ──
   const handleLoginSuccess = (userData) => {
-    setCurrentUser(userData)
-    setCurrentPage('website')
+    setAdminUser(userData)
+    localStorage.setItem('adminUser', JSON.stringify(userData))
   }
 
-  // Logout handler resets user and stays on website as guest
   const handleLogout = () => {
-    setCurrentUser(null)
-    setCurrentPage('website')
+    setAdminUser(null)
+    localStorage.removeItem('adminUser')
     if (devMode) {
       setDevMode(false)
-      localStorage.setItem('devMode', 'false')
-      window.dispatchEvent(new Event('devModeChange'))
+      localStorage.setItem('adminDevMode', 'false')
+      window.dispatchEvent(new Event('adminDevModeChange'))
     }
   }
 
+  const isLoggedIn = adminUser !== null
+
   return (
-    <div className="app-root">
-      <LanguageSelectModal 
-        forceShow={showLangModal} 
-        onClose={() => setShowLangModal(false)} 
-      />
-      {currentPage === 'website' ? (
-        <Website
-          user={currentUser}
+    <>
+      {isLoggedIn ? (
+        <AdminDashboard
+          user={adminUser}
           onLogout={handleLogout}
-          onOpenLogin={handleOpenLogin}
-          onOpenLanguage={() => setShowLangModal(true)}
         />
       ) : (
-        <Login
-          initialView={authMode}
+        <AdminLogin
           onLoginSuccess={handleLoginSuccess}
-          onBackToWebsite={() => setCurrentPage('website')}
+          devMode={devMode}
         />
       )}
 
-      {/* ── Global Dev Mode Toggle Button ── */}
+      {/* ── Global Dev Mode Toggle Button (same UX as main site) ── */}
       <button
+        className={`admin-dev-toggle ${devMode ? 'on' : 'off'}`}
         onClick={toggleDevMode}
         title={devMode ? 'Dev Mode: ON — Click to disable' : 'Dev Mode: OFF — Click to enable'}
-        style={{
-          position: 'fixed', bottom: '20px', right: '20px', zIndex: 9999,
-          width: '44px', height: '44px', borderRadius: '50%',
-          border: devMode ? '2px solid #16a34a' : '2px solid #94a3b8',
-          background: devMode ? '#dcfce7' : '#f1f5f9',
-          color: devMode ? '#15803d' : '#64748b',
-          cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.12)', transition: 'all 0.2s ease',
-          fontSize: '18px',
-        }}
       >
         {devMode ? '✓' : '⚙'}
       </button>
-    </div>
+    </>
   )
 }
