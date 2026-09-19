@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import './website.css'
 import { extractCleanUsername, formatDisplayName } from './utils/userUtils'
 
@@ -75,6 +75,19 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
         name: uName,
         username: uUsername,
         email: user.email || prev.email,
+        ...(user.aadhaarVerified && user.aadhaarDetails
+          ? {
+              aadhaarVerified: true,
+              aadhaarDetails: user.aadhaarDetails,
+              dob: user.aadhaarDetails.dob,
+              gender: user.aadhaarDetails.gender,
+              address: user.aadhaarDetails.address,
+              district: user.aadhaarDetails.district,
+              state: user.aadhaarDetails.state,
+              contact: user.aadhaarDetails.contact,
+              isPhoneVerified: true,
+            }
+          : {}),
       }))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -100,6 +113,95 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
 
   const stepsRef = useRef(null)
   const fileInputRef = useRef(null)
+
+  // ── Inactivity Session Timeout (10 min = 600s, warning at 8 min = 480s) ────
+  const TIMEOUT_MS = 10 * 60 * 1000 // 10 minutes
+  const WARNING_MS = 8 * 60 * 1000  // 8 minutes
+  const [showInactivityWarning, setShowInactivityWarning] = useState(false)
+  const inactivityTimerRef = useRef(null)
+  const warningTimerRef = useRef(null)
+
+  const resetInactivityTimer = useCallback(() => {
+    if (!user) return
+    setShowInactivityWarning(false)
+    clearTimeout(inactivityTimerRef.current)
+    clearTimeout(warningTimerRef.current)
+
+    warningTimerRef.current = setTimeout(() => {
+      setShowInactivityWarning(true)
+    }, WARNING_MS)
+
+    inactivityTimerRef.current = setTimeout(() => {
+      setShowInactivityWarning(false)
+      if (onLogout) onLogout()
+    }, TIMEOUT_MS)
+  }, [user, onLogout])
+
+  useEffect(() => {
+    if (!user) return
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart']
+    events.forEach((e) => window.addEventListener(e, resetInactivityTimer))
+    resetInactivityTimer()
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, resetInactivityTimer))
+      clearTimeout(inactivityTimerRef.current)
+      clearTimeout(warningTimerRef.current)
+    }
+  }, [user, resetInactivityTimer])
+
+  useEffect(() => {
+    const handleDevModeChange = () => {
+      const isDev = localStorage.getItem('devMode') === 'true'
+      if (isDev) {
+        // Inject mock authenticated data
+        setProfileData((prev) => ({
+          ...prev,
+          name: 'Dev User',
+          username: 'devuser',
+          email: 'dev@bhoomintelli.in',
+          contact: '9876543210',
+          isPhoneVerified: true,
+          gender: 'Male',
+          dob: '1995-06-15',
+          address: 'Village Khandsa, Gurugram',
+          district: 'Gurugram',
+          state: 'Haryana',
+          aadhaarVerified: true,
+          aadhaarDetails: {
+            aadhaarNumber: '234567891234',
+            formattedAadhaar: '2345 6789 1234',
+            maskedAadhaar: 'XXXX XXXX 1234',
+            name: 'Dev User',
+            dob: '15/06/1995',
+            gender: 'Male',
+            address: 'Village Khandsa, Gurugram',
+            district: 'Gurugram',
+            state: 'Haryana',
+            pincode: '122001',
+            contact: '9876543210',
+          },
+        }))
+      } else {
+        // Reset to defaults
+        setProfileData({
+          name: defaultDisplayName,
+          username: defaultUsername,
+          email: user?.email || '',
+          contact: '',
+          isPhoneVerified: false,
+          gender: '',
+          dob: '',
+          address: '',
+          district: '',
+          state: 'Haryana',
+        })
+      }
+    }
+    
+    handleDevModeChange()
+    window.addEventListener('devModeChange', handleDevModeChange)
+    return () => window.removeEventListener('devModeChange', handleDevModeChange)
+  }, [user, defaultDisplayName, defaultUsername])
 
   // ── Navigation helpers ──────────────────────────────────────────────────────
   const scrollToSection = (sectionId) => {
@@ -343,6 +445,21 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
           )}
 
           <Footer />
+
+          {/* ── Inactivity Warning Toast ── */}
+          {showInactivityWarning && (
+            <div style={{
+              position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
+              background: '#fef3c7', border: '1px solid #f59e0b', color: '#92400e',
+              padding: '12px 24px', borderRadius: '10px', fontSize: '13px', fontWeight: '600',
+              zIndex: 9999, boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+              display: 'flex', alignItems: 'center', gap: '8px',
+            }}>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d97706" strokeWidth="2.5"><circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" /></svg>
+              You will be logged out in 2 minutes due to inactivity.
+            </div>
+          )}
+
         </>
       )}
     </div>

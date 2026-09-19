@@ -1,7 +1,7 @@
 // AboutUsTab: Project overview, core tech pillars, and dynamic changelog
 // ⚠️  Always update VERSION and CHANGELOG when new features are added
 import { useLanguage } from '../../i18n/LanguageContext'
-const VERSION = 'v2.4.0'
+const VERSION = 'v2.5.0'
 const RELEASE_DATE = 'SIH 2026 Edition'
 
 const getTechPillars = (t) => [
@@ -57,6 +57,10 @@ const getTechPillars = (t) => [
 ]
 
 const getChangelog = (t) => [
+  {
+    title: 'v2.5.0 — First-Landing Language Selector & Header Dropdown:',
+    desc: 'Brought language selection directly upfront upon site entrance and added a 1-click header dropdown select across all 22 official Indian languages.',
+  },
   {
     title: t('about.changelog1Title'),
     desc: t('about.changelog1Desc'),

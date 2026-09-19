@@ -1,5 +1,6 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext } from 'react';
 import { translations } from './index';
+import { languages } from './languages';
 
 const LanguageContext = createContext();
 
@@ -11,6 +12,7 @@ export const LanguageProvider = ({ children }) => {
   const setLanguage = (lang) => {
     setCurrentLang(lang);
     localStorage.setItem('bhoomi-lang', lang);
+    sessionStorage.setItem('bhoomi-lang-selected', 'true');
   };
 
   const t = (key) => {
@@ -32,7 +34,7 @@ export const LanguageProvider = ({ children }) => {
   };
 
   return (
-    <LanguageContext.Provider value={{ currentLang, setLanguage, t }}>
+    <LanguageContext.Provider value={{ currentLang, setLanguage, t, languages }}>
       {children}
     </LanguageContext.Provider>
   );

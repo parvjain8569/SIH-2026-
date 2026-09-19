@@ -74,6 +74,16 @@ function CaptchaStep({ onVerified, onClose }) {
 
   useEffect(() => {
     drawCaptcha(canvasRef.current, captchaText)
+    
+    // DevMode Autofill
+    const handleDevMode = () => {
+      if (localStorage.getItem('devMode') === 'true') {
+        setUserInput(captchaText)
+      }
+    }
+    handleDevMode()
+    window.addEventListener('devModeChange', handleDevMode)
+    return () => window.removeEventListener('devModeChange', handleDevMode)
   }, [captchaText])
 
   const refresh = () => {
@@ -171,6 +181,16 @@ function OTPStep({ phoneNumber, onVerified, onClose }) {
 
   useEffect(() => {
     console.log(`[DEMO OTP] Your OTP is: ${otp}`)
+    
+    // DevMode Autofill
+    const handleDevMode = () => {
+      if (localStorage.getItem('devMode') === 'true') {
+        setInputs(otp.split(''))
+      }
+    }
+    handleDevMode()
+    window.addEventListener('devModeChange', handleDevMode)
+    return () => window.removeEventListener('devModeChange', handleDevMode)
   }, [otp])
 
   useEffect(() => {

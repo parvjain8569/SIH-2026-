@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import './login.css'
 import { extractCleanUsername, formatDisplayName } from './utils/userUtils'
 import { useLanguage } from './i18n/LanguageContext'
+import { generateMockAadhaarData } from './utils/userUtils'
 
 export default function Login({ onLoginSuccess, onBackToWebsite, initialView = 'create' }) {
-  // Views: 'create' | 'otp' | 'signin' | 'forgot_email' | 'forgot_otp' | 'forgot_reset'
+  // Views: 'create' | 'otp' | 'aadhaar_kyc' | 'signin' | 'forgot_email' | 'forgot_otp' | 'forgot_reset'
   const [view, setView] = useState(initialView)
   const { t } = useLanguage()
 
@@ -20,6 +21,27 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
   const [generatedOtp] = useState('482910') // Demo helper code
 
+  // DevMode Autofill Effect
+  useEffect(() => {
+    const handleDevMode = () => {
+      const isDev = localStorage.getItem('devMode') === 'true'
+      if (isDev) {
+        setFormData(prev => ({
+          ...prev,
+          name: 'Dev User',
+          surname: 'Tester',
+          email: 'dev@bhoomintelli.in',
+          password: 'Password123!'
+        }))
+        setOtpDigits(['4', '8', '2', '9', '1', '0'])
+        setAadhaarInput('2345 6789 1234')
+      }
+    }
+    handleDevMode() // check on mount
+    window.addEventListener('devModeChange', handleDevMode)
+    return () => window.removeEventListener('devModeChange', handleDevMode)
+  }, [])
+
   // Forgot Password state
   const [forgotEmail, setForgotEmail] = useState('')
   const [forgotOtpDigits, setForgotOtpDigits] = useState(['', '', '', '', '', ''])
@@ -29,6 +51,47 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
 
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+
+  // ── Security: Password Strength ──────────────────────────────────
+  const getPasswordStrength = (pwd) => {
+    if (!pwd) return { score: 0, label: '', color: '#e2e8f0' }
+    let score = 0
+    if (pwd.length >= 6) score++
+    if (pwd.length >= 10) score++
+    if (/[A-Z]/.test(pwd)) score++
+    if (/[0-9]/.test(pwd)) score++
+    if (/[^A-Za-z0-9]/.test(pwd)) score++
+    if (score <= 1) return { score: 1, label: 'Weak', color: '#ef4444' }
+    if (score === 2) return { score: 2, label: 'Fair', color: '#f97316' }
+    if (score === 3) return { score: 3, label: 'Good', color: '#eab308' }
+    return { score: Math.min(score, 4), label: 'Strong', color: '#22c55e' }
+  }
+  const pwdStrength = getPasswordStrength(formData.password)
+
+  // ── Security: 3-Attempt Account Lockout ──────────────────────────
+  const [failedAttempts, setFailedAttempts] = useState(0)
+  const [isLockedOut, setIsLockedOut] = useState(false)
+  const [lockoutSeconds, setLockoutSeconds] = useState(0)
+  const lockoutTimerRef = useRef(null)
+
+  useEffect(() => {
+    if (isLockedOut && lockoutSeconds > 0) {
+      lockoutTimerRef.current = setTimeout(() => {
+        setLockoutSeconds((s) => s - 1)
+      }, 1000)
+    }
+    if (isLockedOut && lockoutSeconds === 0) {
+      setIsLockedOut(false)
+      setFailedAttempts(0)
+      setError('')
+    }
+    return () => clearTimeout(lockoutTimerRef.current)
+  }, [isLockedOut, lockoutSeconds])
+
+  // ── Aadhaar KYC state ────────────────────────────────────────────
+  const [aadhaarInput, setAadhaarInput] = useState('')
+  const [aadhaarVerifying, setAadhaarVerifying] = useState(false)
+  const [aadhaarVerifiedData, setAadhaarVerifiedData] = useState(null)
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -78,8 +141,33 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
       return
     }
 
-    // Accept mock OTP or any 6 digits for testing
-    setSuccess('Email verified successfully! Please sign in with your password.')
+    // Accept mock OTP or any 6 digits for testing → go to Aadhaar KYC step
+    setSuccess('Email verified! Complete Aadhaar verification or skip to continue.')
+    setError('')
+    setView('aadhaar_kyc')
+  }
+
+  // Handle Aadhaar KYC verification (mock)
+  const handleAadhaarVerify = () => {
+    const cleaned = aadhaarInput.replace(/\s/g, '')
+    if (cleaned.length !== 12 || !/^\d+$/.test(cleaned)) {
+      setError('Please enter a valid 12-digit Aadhaar number.')
+      return
+    }
+    setError('')
+    setAadhaarVerifying(true)
+    // Simulate verification delay
+    setTimeout(() => {
+      setAadhaarVerifying(false)
+      setAadhaarVerifiedData(generateMockAadhaarData(cleaned))
+      setSuccess('Aadhaar verified successfully! You can now sign in.')
+      setView('signin')
+    }, 2000)
+  }
+
+  const handleSkipAadhaar = () => {
+    setSuccess('You can verify your Aadhaar later from your Profile. Please sign in.')
+    setError('')
     setView('signin')
   }
 
@@ -88,6 +176,8 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
     e.preventDefault()
     setError('')
 
+    if (isLockedOut) return
+
     const { email, password } = formData
 
     if (!email.trim() || !password) {
@@ -95,20 +185,33 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
       return
     }
 
+    // Demo: simulate wrong password if password is literally 'wrong'
+    if (password === 'wrong') {
+      const newFails = failedAttempts + 1
+      setFailedAttempts(newFails)
+      if (newFails >= 3) {
+        setIsLockedOut(true)
+        setLockoutSeconds(30)
+        setError('Account locked due to too many failed attempts. Try again in 30 seconds.')
+      } else {
+        setError(`Invalid credentials. ${3 - newFails} attempt(s) remaining.`)
+      }
+      return
+    }
+
     if (onLoginSuccess) {
       const emailTrimmed = email.trim()
       const username = extractCleanUsername(emailTrimmed)
-      const formattedName = formatDisplayName(username)
-
-      const displayName = formData.name
-        ? `${formData.name} ${formData.surname || ''}`.trim()
-        : formattedName
-
-      onLoginSuccess({
-        name: displayName,
+      const uName = formData.name || formatDisplayName(username)
+      
+      const payload = {
+        name: uName,
         username: username,
         email: emailTrimmed,
-      })
+        aadhaarVerified: !!aadhaarVerifiedData,
+        aadhaarDetails: aadhaarVerifiedData
+      }
+      onLoginSuccess(payload)
     }
   }
 
@@ -250,7 +353,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                 />
               </div>
 
-              {/* ONLY PASSWORD */}
+              {/* PASSWORD + STRENGTH METER */}
               <div className="auth-form-group">
                 <label className="auth-label" htmlFor="password">
                   {t('login.passwordLabel')}
@@ -266,6 +369,22 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                   autoComplete="new-password"
                   required
                 />
+                {formData.password && (
+                  <div className="pwd-strength-wrap">
+                    <div className="pwd-strength-bar">
+                      <div
+                        className="pwd-strength-fill"
+                        style={{
+                          width: `${(pwdStrength.score / 4) * 100}%`,
+                          backgroundColor: pwdStrength.color,
+                        }}
+                      />
+                    </div>
+                    <span className="pwd-strength-label" style={{ color: pwdStrength.color }}>
+                      {pwdStrength.label}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <button type="submit" className="auth-btn-primary">
@@ -374,6 +493,85 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
         {/* ============================================================
             VIEW 3: SIGN IN SCREEN WITH FORGOT PASSWORD LINK
             ============================================================ */}
+        {/* ============================================================
+            VIEW: AADHAAR KYC (after OTP, before signin)
+            ============================================================ */}
+        {view === 'aadhaar_kyc' && (
+          <div>
+            <div className="auth-badge" aria-label="Aadhaar Badge">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
+            </div>
+
+            <h1 className="auth-title">Aadhaar e-KYC Verification</h1>
+            <p className="auth-subtitle">
+              Link your Aadhaar to verify your identity. This helps secure your land records.
+            </p>
+
+            {error && <div className="auth-alert auth-alert-error">{error}</div>}
+            {success && <div className="auth-alert auth-alert-success">{success}</div>}
+
+            <div className="auth-form">
+              <div className="auth-form-group">
+                <label className="auth-label" htmlFor="aadhaar-input">
+                  Aadhaar Number (12 digits)
+                </label>
+                <input
+                  id="aadhaar-input"
+                  type="text"
+                  className="auth-input"
+                  placeholder="XXXX XXXX XXXX"
+                  maxLength={14}
+                  value={aadhaarInput}
+                  onChange={(e) => {
+                    // Auto-format with spaces
+                    const raw = e.target.value.replace(/\D/g, '').slice(0, 12)
+                    const formatted = raw.replace(/(\d{4})(?=\d)/g, '$1 ')
+                    setAadhaarInput(formatted)
+                    if (error) setError('')
+                  }}
+                  disabled={aadhaarVerifying}
+                />
+              </div>
+
+              <button
+                type="button"
+                className="auth-btn-primary"
+                onClick={handleAadhaarVerify}
+                disabled={aadhaarVerifying}
+                style={{ position: 'relative' }}
+              >
+                {aadhaarVerifying ? (
+                  <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    <span className="auth-spinner" /> Verifying with UIDAI...
+                  </span>
+                ) : (
+                  'Verify Aadhaar'
+                )}
+              </button>
+
+              <button
+                type="button"
+                className="auth-btn-secondary"
+                onClick={handleSkipAadhaar}
+                disabled={aadhaarVerifying}
+                style={{ marginTop: '10px' }}
+              >
+                Skip for Now →
+              </button>
+            </div>
+
+            <div className="auth-footer" style={{ marginTop: '16px', fontSize: '12px', color: '#94a3b8' }}>
+              You can complete Aadhaar verification later from your Profile settings.
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================
+            VIEW 3: SIGN IN SCREEN WITH FORGOT PASSWORD LINK
+            ============================================================ */}
         {view === 'signin' && (
           <div>
             <h1 className="auth-title">{t('login.signInTitle')}</h1>
@@ -381,6 +579,12 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
 
             {error && <div className="auth-alert auth-alert-error">{error}</div>}
             {success && <div className="auth-alert auth-alert-success">{success}</div>}
+            {isLockedOut && (
+              <div className="auth-lockout-bar">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2.5"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+                <span>Account locked. Try again in <strong>{lockoutSeconds}s</strong></span>
+              </div>
+            )}
 
             <form className="auth-form" onSubmit={handleSignIn}>
               <div className="auth-form-group">
@@ -431,8 +635,8 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                 />
               </div>
 
-              <button type="submit" className="auth-btn-primary">
-                {t('login.signInBtn')}
+              <button type="submit" className="auth-btn-primary" disabled={isLockedOut}>
+                {isLockedOut ? `Locked (${lockoutSeconds}s)` : t('login.signInBtn')}
               </button>
             </form>
 

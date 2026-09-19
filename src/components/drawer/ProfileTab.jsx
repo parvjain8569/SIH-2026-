@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLanguage } from '../../i18n/LanguageContext'
+import { generateMockAadhaarData } from '../../utils/userUtils'
 
 // ProfileTab: Minimal, high-contrast landholder profile with integrated mobile OTP verification
 // Modeled after clean real-world portals (WhatsApp / Flipkart / DigiLocker)
@@ -29,6 +30,66 @@ export default function ProfileTab({
   const [saveSuccess, setSaveSuccess] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [saveProgress, setSaveProgress] = useState(0)
+
+  // ── Aadhaar e-KYC state ───────────────────────────────────────
+
+
+  const [isAadhaarVerified, setIsAadhaarVerified] = useState(false)
+  const [aadhaarDetails, setAadhaarDetails] = useState(null)
+  const [aadhaarInput, setAadhaarInput] = useState('')
+  const [aadhaarVerifying, setAadhaarVerifying] = useState(false)
+  const [aadhaarError, setAadhaarError] = useState('')
+
+  // Sync from parent profileData if aadhaar was set during login
+  useEffect(() => {
+    if (profileData?.aadhaarVerified && profileData?.aadhaarDetails) {
+      setIsAadhaarVerified(true)
+      setAadhaarDetails(profileData.aadhaarDetails)
+    }
+  }, [profileData])
+
+  const handleAadhaarVerify = () => {
+    const cleaned = aadhaarInput.replace(/\s/g, '')
+    if (cleaned.length !== 12 || !/^\d+$/.test(cleaned)) {
+      setAadhaarError('Please enter a valid 12-digit Aadhaar number.')
+      return
+    }
+    setAadhaarError('')
+    setAadhaarVerifying(true)
+    setTimeout(() => {
+      const mockData = generateMockAadhaarData(cleaned)
+      setAadhaarDetails(mockData)
+      setIsAadhaarVerified(true)
+      setAadhaarVerifying(false)
+      
+      const updatedFormData = {
+        ...formData,
+        name: mockData.name,
+        dob: mockData.dob,
+        gender: mockData.gender,
+        address: mockData.address,
+        district: mockData.district,
+        state: mockData.state,
+        contact: mockData.contact,
+        isPhoneVerified: true, // Assuming aadhaar phone is verified
+      }
+      setFormData(updatedFormData)
+      
+      // Update parent state
+      onProfileSave({
+        ...updatedFormData,
+        aadhaarVerified: true,
+        aadhaarDetails: mockData,
+      })
+    }, 2000)
+  }
+
+  const handleResetAadhaar = () => {
+    setIsAadhaarVerified(false)
+    setAadhaarDetails(null)
+    setAadhaarInput('')
+    setAadhaarError('')
+  }
 
   const handleInputChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
@@ -259,6 +320,66 @@ export default function ProfileTab({
               </div>
             )}
           </div>
+        </div>
+
+        {/* ── AADHAAR e-KYC VERIFICATION ── */}
+        <div className="profile-form-section">
+          <h4 className="section-title">Aadhaar e-KYC Verification</h4>
+
+          {!isAadhaarVerified ? (
+            <div>
+              <div className="form-field-group">
+                <label className="field-label" htmlFor="prof-aadhaar">
+                  Aadhaar Number (12 digits)
+                </label>
+                <input
+                  id="prof-aadhaar"
+                  type="text"
+                  className="clean-input"
+                  placeholder="XXXX XXXX XXXX"
+                  maxLength={14}
+                  value={aadhaarInput}
+                  onChange={(e) => {
+                    const raw = e.target.value.replace(/\D/g, '').slice(0, 12)
+                    const formatted = raw.replace(/(\d{4})(?=\d)/g, '$1 ')
+                    setAadhaarInput(formatted)
+                    if (aadhaarError) setAadhaarError('')
+                  }}
+                  disabled={aadhaarVerifying}
+                />
+                {aadhaarError && <div className="field-error-text">{aadhaarError}</div>}
+              </div>
+              <button
+                type="button"
+                className="btn-send-phone-otp"
+                onClick={handleAadhaarVerify}
+                disabled={aadhaarVerifying}
+                style={{ marginTop: '8px', width: '100%' }}
+              >
+                {aadhaarVerifying ? 'Verifying with UIDAI...' : 'Verify Aadhaar'}
+              </button>
+            </div>
+          ) : (
+            <div style={{ padding: '16px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', marginTop: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '500', marginBottom: '4px' }}>Aadhaar Number</div>
+                  <div style={{ fontSize: '16px', color: '#0f172a', fontWeight: '600' }}>{aadhaarDetails?.maskedAadhaar || 'XXXX XXXX 1234'}</div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleResetAadhaar}
+                  style={{ background: 'none', border: 'none', color: '#4f46e5', fontWeight: '500', cursor: 'pointer', fontSize: '14px', padding: '8px' }}
+                >
+                  Edit
+                </button>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', fontSize: '13px', color: '#16a34a', fontWeight: '500' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5"><path d="m5 12 5 5L20 7" /></svg>
+                Verified via e-KYC
+              </div>
+            </div>
+          )}
         </div>
 
         {/* ── SECTION 2: Landholder Identity ── */}

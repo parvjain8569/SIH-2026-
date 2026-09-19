@@ -25,11 +25,11 @@ const DEMO_DOCUMENT = {
 
 // ── Fixed AI-extracted fields (no editing state) ──────────────────────────
 const INITIAL_FIELDS = [
-  { id: 'owner',    label: 'Owner Name',    value: 'Suresh Kumar',   status: 'GREEN', accepted: false },
-  { id: 'khasra',  label: 'Khasra Number', value: '128/3',          status: 'AMBER', accepted: false },
-  { id: 'area',    label: 'Plot Area',     value: '2.1 Hectares',   status: 'GREEN', accepted: false },
-  { id: 'date',    label: 'Deed Date',     value: '12/05/2023',     status: 'GREEN', accepted: false },
-  { id: 'mutation',label: 'Mutation ID',   value: 'MUT-2023-4421',  status: 'AMBER', accepted: false },
+  { id: 'owner',    label: 'Owner Name',    value: 'Suresh Kumar',   reviewState: 'PENDING' },
+  { id: 'khasra',  label: 'Khasra Number', value: '128/3',          reviewState: 'PENDING' },
+  { id: 'area',    label: 'Plot Area',     value: '2.1 Hectares',   reviewState: 'PENDING' },
+  { id: 'date',    label: 'Deed Date',     value: '12/05/2023',     reviewState: 'PENDING' },
+  { id: 'mutation',label: 'Mutation ID',   value: 'MUT-2023-4421',  reviewState: 'PENDING' },
 ]
 
 const HIGHLIGHT_COLORS = {
@@ -51,11 +51,11 @@ export default function DocumentReviewPage({ onBack, uploadedFileName }) {
   const updateField = (id, patch) =>
     setFields((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)))
 
-  const acceptedCount = fields.filter((f) => f.accepted).length
-  const allAccepted = acceptedCount === fields.length
+  const reviewedCount = fields.filter((f) => f.reviewState !== 'PENDING').length
+  const allReviewed = reviewedCount === fields.length
 
   const handleSubmitReview = () => {
-    if (!allAccepted) return
+    if (!allReviewed) return
     setSubmitted(true)
   }
 
@@ -168,11 +168,11 @@ export default function DocumentReviewPage({ onBack, uploadedFileName }) {
             </div>
 
             <div className="doc-fields-progress">
-              <span className="doc-fields-progress-text">{acceptedCount}/{fields.length} {t('review.fieldsAccepted')}</span>
+              <span className="doc-fields-progress-text">{reviewedCount}/{fields.length} {t('review.fieldsAccepted')}</span>
               <div className="doc-fields-progress-bar">
                 <div
                   className="doc-fields-progress-fill"
-                  style={{ width: `${(acceptedCount / fields.length) * 100}%` }}
+                  style={{ width: `${(reviewedCount / fields.length) * 100}%` }}
                 />
               </div>
             </div>
@@ -181,48 +181,43 @@ export default function DocumentReviewPage({ onBack, uploadedFileName }) {
               {fields.map((field) => (
                 <div
                   key={field.id}
-                  className={`doc-field-card ${field.accepted ? 'doc-field-accepted' : ''} ${activeFieldId === field.id ? 'doc-field-active' : ''}`}
+                  className={`doc-field-card ${field.reviewState === 'ACCEPTED' ? 'doc-field-accepted' : ''} ${field.reviewState === 'FLAGGED' ? 'doc-field-flagged' : ''} ${activeFieldId === field.id ? 'doc-field-active' : ''}`}
                   onClick={() => setActiveFieldId(field.id === activeFieldId ? null : field.id)}
                 >
                   <div className="doc-field-card-top">
-                    <input
-                      type="checkbox"
-                      className="doc-field-checkbox"
-                      checked={field.accepted}
-                      onChange={(e) => {
-                        e.stopPropagation()
-                        updateField(field.id, { accepted: e.target.checked })
-                      }}
-                    />
                     <span className="doc-field-label">{field.label}</span>
                   </div>
 
                   <div className="doc-field-value-row">
                     <span className="doc-field-value">{field.value}</span>
-                    <span className={`doc-field-status ${field.status === 'GREEN' ? 'status-green' : 'status-amber'}`}>
-                      {field.status}
-                    </span>
+                    {field.reviewState !== 'PENDING' && (
+                      <span className={`doc-field-status ${field.reviewState === 'ACCEPTED' ? 'status-green' : 'status-red'}`}>
+                        {field.reviewState === 'ACCEPTED' ? 'ACCEPTED' : 'FLAGGED'}
+                      </span>
+                    )}
                   </div>
 
-                  <div className="doc-field-status-row">
-                    <svg width="13" height="13" viewBox="0 0 24 24" fill={field.status === 'GREEN' ? '#16a34a' : '#d97706'} stroke="none">
-                      <rect width="24" height="24" rx="3" />
-                    </svg>
-                    <span style={{ fontSize: '11.5px', color: field.status === 'GREEN' ? '#15803d' : '#b45309', fontWeight: 500 }}>
-                      {field.status === 'GREEN' ? t('review.statusGreen') : t('review.statusAmber')}
-                    </span>
-                  </div>
+                  {field.reviewState !== 'PENDING' && (
+                    <div className="doc-field-status-row">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill={field.reviewState === 'ACCEPTED' ? '#16a34a' : '#dc2626'} stroke="none">
+                        <rect width="24" height="24" rx="3" />
+                      </svg>
+                      <span style={{ fontSize: '11.5px', color: field.reviewState === 'ACCEPTED' ? '#15803d' : '#991b1b', fontWeight: 500 }}>
+                        {field.reviewState === 'ACCEPTED' ? t('review.statusGreen', 'Validated') : t('review.statusRed', 'Flagged')}
+                      </span>
+                    </div>
+                  )}
 
                   <div className="doc-field-actions" onClick={(e) => e.stopPropagation()}>
                     <button
                       className="doc-field-btn doc-btn-accept"
-                      onClick={() => updateField(field.id, { accepted: true })}
+                      onClick={() => updateField(field.id, { reviewState: 'ACCEPTED' })}
                     >
                       {t('review.accept')}
                     </button>
                     <button
                       className="doc-field-btn doc-btn-flag"
-                      onClick={() => updateField(field.id, { accepted: false, status: 'AMBER' })}
+                      onClick={() => updateField(field.id, { reviewState: 'FLAGGED' })}
                     >
                       {t('review.flag')}
                     </button>
@@ -232,13 +227,13 @@ export default function DocumentReviewPage({ onBack, uploadedFileName }) {
             </div>
 
             <div className="doc-submit-wrap">
-              {!allAccepted && (
+              {!allReviewed && (
                 <p className="doc-submit-hint">{t('review.submitHint').replace('{count}', fields.length)}</p>
               )}
               <button
-                className={`doc-submit-btn ${allAccepted ? 'doc-submit-ready' : 'doc-submit-disabled'}`}
+                className={`doc-submit-btn ${allReviewed ? 'doc-submit-ready' : 'doc-submit-disabled'}`}
                 onClick={handleSubmitReview}
-                disabled={!allAccepted}
+                disabled={!allReviewed}
               >
                 {t('review.submitBtn')}
               </button>

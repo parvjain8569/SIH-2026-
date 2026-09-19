@@ -15,7 +15,7 @@ export default function Navbar({
   onScrollToSection,
   onOpenLanguage
 }) {
-  const { t } = useLanguage()
+  const { currentLang, setLanguage, languages, t } = useLanguage()
 
   return (
     <header className="bhoomi-navbar">
@@ -76,18 +76,34 @@ export default function Navbar({
         {/* ── Right side controls ── */}
         <div className="bhoomi-nav-right">
 
-          <button
-            className="bhoomi-nav-icon-btn"
-            onClick={onOpenLanguage}
-            title="Change Language"
-            aria-label="Change Language"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          {/* ── Direct 1-Click Language Dropdown Select ── */}
+          <div className="bhoomi-lang-select-wrapper" title="Select Language / भाषा चुनें">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="bhoomi-lang-globe-icon">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
             </svg>
-          </button>
+            <select
+              className="bhoomi-lang-select"
+              value={currentLang || 'en'}
+              onChange={(e) => {
+                if (e.target.value === '__MORE__') {
+                  if (onOpenLanguage) onOpenLanguage();
+                } else {
+                  setLanguage(e.target.value);
+                }
+              }}
+              aria-label="Select Language"
+            >
+              {languages && languages.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.native} ({lang.name})
+                </option>
+              ))}
+              <option value="__MORE__">🌐 All Languages Grid...</option>
+            </select>
+            <span className="bhoomi-lang-caret">▾</span>
+          </div>
 
           {/* Notification bell (or About info if guest) */}
           {user ? (

@@ -3,6 +3,7 @@ import NotificationsTab from './NotificationsTab'
 import SettingsTab from './SettingsTab'
 import HelpCenterTab from './HelpCenterTab'
 import AboutUsTab from './AboutUsTab'
+import DeveloperTab from './DeveloperTab'
 import { useLanguage } from '../../i18n/LanguageContext'
 
 // Clean professional tab definitions with SVG icons (no emojis)
@@ -59,6 +60,16 @@ const AUTH_TABS = [
       </svg>
     )
   },
+  {
+    id: 'developer',
+    labelKey: 'drawer.developer',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 18 22 12 16 6"></polyline>
+        <polyline points="8 6 2 12 8 18"></polyline>
+      </svg>
+    )
+  },
 ]
 
 // Tabs available for guests
@@ -85,6 +96,16 @@ const GUEST_TABS = [
       </svg>
     )
   },
+  {
+    id: 'developer',
+    labelKey: 'drawer.developer',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 18 22 12 16 6"></polyline>
+        <polyline points="8 6 2 12 8 18"></polyline>
+      </svg>
+    )
+  },
 ]
 
 export default function MenuDrawer({
@@ -108,6 +129,7 @@ export default function MenuDrawer({
   const getDrawerTitle = () => {
     if (activeTab === 'help') return t('drawer.helpCenterSupport')
     if (activeTab === 'about') return t('drawer.aboutBhoomiTitle')
+    if (activeTab === 'developer') return t('drawer.developerTitle') || 'About Developer'
     if (activeTab === 'profile') return t('drawer.profileTitle')
     if (activeTab === 'notification') return t('drawer.notificationsTitle')
     if (activeTab === 'settings') return t('drawer.settingsTitle')
@@ -161,6 +183,7 @@ export default function MenuDrawer({
           {/* If guest or user, correctly render the selected tab */}
           {activeTab === 'help' && <HelpCenterTab />}
           {activeTab === 'about' && <AboutUsTab />}
+          {activeTab === 'developer' && <DeveloperTab />}
 
           {/* Authenticated-only tabs */}
           {!isGuest && activeTab === 'profile' && (

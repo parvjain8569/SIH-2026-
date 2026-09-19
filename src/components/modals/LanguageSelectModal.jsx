@@ -1,133 +1,141 @@
 import React from 'react';
 import { useLanguage } from '../../i18n/LanguageContext';
-
-const languages = [
-  { code: 'en', name: 'English', native: 'English' },
-  { code: 'hi', name: 'Hindi', native: 'हिन्दी' },
-  { code: 'bn', name: 'Bengali', native: 'বাংলা' },
-  { code: 'te', name: 'Telugu', native: 'తెలుగు' },
-  { code: 'mr', name: 'Marathi', native: 'मराठी' },
-  { code: 'ta', name: 'Tamil', native: 'தமிழ்' },
-  { code: 'ur', name: 'Urdu', native: 'اردو' },
-  { code: 'gu', name: 'Gujarati', native: 'ગુજરાતી' },
-  { code: 'kn', name: 'Kannada', native: 'ಕನ್ನಡ' },
-  { code: 'ml', name: 'Malayalam', native: 'മലയാളം' },
-  { code: 'or', name: 'Odia', native: 'ଓଡ଼ିଆ' },
-  { code: 'pa', name: 'Punjabi', native: 'ਪੰਜਾਬੀ' },
-  { code: 'as', name: 'Assamese', native: 'অসমীয়া' },
-  { code: 'mai', name: 'Maithili', native: 'मैथिली' },
-  { code: 'sat', name: 'Santali', native: 'ᱥᱟᱱᱛᱟᱲᱤ' },
-  { code: 'ks', name: 'Kashmiri', native: 'कॉशुर' },
-  { code: 'ne', name: 'Nepali', native: 'नेपाली' },
-  { code: 'sd', name: 'Sindhi', native: 'سنڌي' },
-  { code: 'kok', name: 'Konkani', native: 'कोंकणी' },
-  { code: 'doi', name: 'Dogri', native: 'डोगरी' },
-  { code: 'mni', name: 'Manipuri', native: 'মৈতৈলোন্' },
-  { code: 'brx', name: 'Bodo', native: 'बड़ो' },
-];
+import { languages } from '../../i18n/languages';
 
 export default function LanguageSelectModal({ onClose, forceShow }) {
   const { currentLang, setLanguage, t } = useLanguage();
 
-  // If we already have a language and aren't forcing the modal open, hide it
-  if (currentLang && !forceShow) return null;
+  // Show modal whenever forceShow is true
+  if (!forceShow) return null;
 
   return (
     <div className="bhoomi-modal-overlay" style={{ zIndex: 9999 }}>
       <div 
         className="bhoomi-modal" 
         style={{ 
-          maxWidth: '800px', 
-          width: '90%', 
+          maxWidth: '780px', 
+          width: '92%', 
           maxHeight: '90vh', 
-          overflowY: 'auto' 
+          overflowY: 'auto',
+          borderRadius: '20px',
+          padding: '32px 28px',
+          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
         }}
       >
-        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
           <div style={{ 
-            width: '64px', 
-            height: '64px', 
-            backgroundColor: '#ecfdf5', 
+            width: '68px', 
+            height: '68px', 
+            backgroundColor: '#dcfce7', 
             borderRadius: '50%', 
             display: 'flex', 
             alignItems: 'center', 
             justifyContent: 'center',
             margin: '0 auto 16px',
-            color: '#16a34a'
+            color: '#15803d',
+            boxShadow: '0 4px 12px rgba(22, 163, 74, 0.15)'
           }}>
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10"></circle>
               <line x1="2" y1="12" x2="22" y2="12"></line>
               <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
             </svg>
           </div>
-          <h2 style={{ fontSize: '24px', fontWeight: '800', color: '#0f172a', marginBottom: '8px' }}>
-            {t('langSelect.title')} / Select Your Language
+          <h2 style={{ fontSize: '26px', fontWeight: '800', color: '#0f172a', marginBottom: '8px', letterSpacing: '-0.5px' }}>
+            Select Your Language / अपनी भाषा चुनें
           </h2>
-          <p style={{ color: '#64748b' }}>
-            {t('langSelect.subtitle')} / Choose your preferred language to continue.
+          <p style={{ color: '#64748b', fontSize: '15px', maxWidth: '520px', margin: '0 auto' }}>
+            Choose your preferred language to view BhoomIntelli land record portal.
           </p>
         </div>
 
         <div style={{ 
           display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', 
+          gridTemplateColumns: 'repeat(auto-fill, minmax(135px, 1fr))', 
           gap: '12px',
-          marginBottom: '24px'
+          marginBottom: '28px'
         }}>
-          {languages.map((lang) => (
-            <button
-              key={lang.code}
-              onClick={() => {
-                setLanguage(lang.code);
-                if (onClose) onClose();
-              }}
-              style={{
-                padding: '16px 12px',
-                borderRadius: '12px',
-                border: currentLang === lang.code ? '2px solid #16a34a' : '1px solid #e2e8f0',
-                backgroundColor: currentLang === lang.code ? '#ecfdf5' : 'white',
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'all 0.2s ease',
-              }}
-              onMouseEnter={(e) => {
-                if (currentLang !== lang.code) {
-                  e.currentTarget.style.borderColor = '#cbd5e1';
-                  e.currentTarget.style.backgroundColor = '#f8fafc';
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (currentLang !== lang.code) {
-                  e.currentTarget.style.borderColor = '#e2e8f0';
-                  e.currentTarget.style.backgroundColor = 'white';
-                }
-              }}
-            >
-              <span style={{ fontSize: '20px', fontWeight: '700', color: '#0f172a' }}>
-                {lang.native}
-              </span>
-              <span style={{ fontSize: '13px', color: '#64748b' }}>
-                {lang.name}
-              </span>
-            </button>
-          ))}
+          {languages.map((lang) => {
+            const isSelected = (currentLang || 'en') === lang.code;
+            return (
+              <button
+                key={lang.code}
+                onClick={() => {
+                  setLanguage(lang.code);
+                  if (onClose) onClose();
+                }}
+                style={{
+                  padding: '16px 10px',
+                  borderRadius: '14px',
+                  border: isSelected ? '2px solid #16a34a' : '1px solid #e2e8f0',
+                  backgroundColor: isSelected ? '#ecfdf5' : '#ffffff',
+                  boxShadow: isSelected ? '0 4px 12px rgba(22, 163, 74, 0.15)' : 'none',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.18s ease',
+                  position: 'relative',
+                }}
+                onMouseEnter={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.borderColor = '#16a34a';
+                    e.currentTarget.style.backgroundColor = '#f0fdf4';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isSelected) {
+                    e.currentTarget.style.borderColor = '#e2e8f0';
+                    e.currentTarget.style.backgroundColor = '#ffffff';
+                  }
+                }}
+              >
+                {isSelected && (
+                  <span style={{
+                    position: 'absolute',
+                    top: '6px',
+                    right: '8px',
+                    fontSize: '12px',
+                    color: '#16a34a',
+                    fontWeight: '700'
+                  }}>✓</span>
+                )}
+                <span style={{ fontSize: '20px', fontWeight: '700', color: isSelected ? '#15803d' : '#0f172a' }}>
+                  {lang.native}
+                </span>
+                <span style={{ fontSize: '13px', color: isSelected ? '#166534' : '#64748b', fontWeight: isSelected ? '600' : '400' }}>
+                  {lang.name}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
-        {forceShow && (
-          <div style={{ textAlign: 'center' }}>
-            <button 
-              className="btn-upload-primary" 
-              onClick={onClose}
-              style={{ padding: '12px 32px' }}
-            >
-              {t('langSelect.save')}
-            </button>
-          </div>
-        )}
+        <div style={{ textAlign: 'center' }}>
+          <button 
+            onClick={() => {
+              if (!currentLang) setLanguage('en');
+              if (onClose) onClose();
+            }}
+            style={{
+              padding: '12px 36px',
+              borderRadius: '12px',
+              backgroundColor: '#166534',
+              color: '#ffffff',
+              border: 'none',
+              fontSize: '15px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(22, 101, 52, 0.25)',
+              transition: 'all 0.15s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#15803d'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#166534'}
+          >
+            Continue to Website / आगे बढ़ें →
+          </button>
+        </div>
       </div>
     </div>
   );
