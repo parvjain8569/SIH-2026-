@@ -126,17 +126,64 @@ export default function RecordDetailsModal({
                 <div className="bhoomi-doc-row">
                   <span style={{ color: '#6b7280' }}>{t('recordDetails.location')}:</span>
                   <strong style={{ color: '#111827' }}>
-                    {selectedRecord.district}, {selectedRecord.state}
+                    {selectedRecord.village ? `${selectedRecord.village}, ` : ''}{selectedRecord.tehsil ? `${selectedRecord.tehsil}, ` : ''}{selectedRecord.district}, {selectedRecord.state}
                   </strong>
                 </div>
+                {selectedRecord.khatouniNo && (
+                  <div className="bhoomi-doc-row">
+                    <span style={{ color: '#6b7280' }}>Khatouni No:</span>
+                    <strong style={{ color: '#111827' }}>{selectedRecord.khatouniNo}</strong>
+                  </div>
+                )}
                 <div className="bhoomi-doc-row">
                   <span style={{ color: '#6b7280' }}>{t('recordDetails.totalArea')}:</span>
                   <strong style={{ color: '#111827' }}>{selectedRecord.area}</strong>
                 </div>
+                <div className="bhoomi-doc-row">
+                  <span style={{ color: '#6b7280' }}>Dispute Status:</span>
+                  <span style={{
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    padding: '2px 8px',
+                    borderRadius: '4px',
+                    background: selectedRecord.disputeStatus === 'Clear' ? '#dcfce7' : '#fef3c7',
+                    color: selectedRecord.disputeStatus === 'Clear' ? '#15803d' : '#b45309'
+                  }}>
+                    ✓ {selectedRecord.disputeStatus || 'Clear'}
+                  </span>
+                </div>
+                {selectedRecord.digitalHash && (
+                  <div className="bhoomi-doc-row" style={{ alignItems: 'flex-start' }}>
+                    <span style={{ color: '#6b7280' }}>Cryptographic Hash:</span>
+                    <span style={{
+                      fontFamily: 'monospace',
+                      fontSize: '11px',
+                      background: '#f1f5f9',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      color: '#0f172a',
+                      wordBreak: 'break-all',
+                      maxWidth: '240px'
+                    }}>
+                      🔒 {selectedRecord.digitalHash}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
 
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              {selectedRecord?.documentUrl && (
+                <a
+                  href={selectedRecord.documentUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn-how-it-works-downward"
+                  style={{ flex: '1 1 100%', justifyContent: 'center', textDecoration: 'none', background: '#f0fdf4', color: '#15803d', borderColor: '#86efac' }}
+                >
+                  🔗 View Stored Document (Supabase)
+                </a>
+              )}
               <button
                 className="btn-upload-primary"
                 style={{ flex: '1 1 180px', justifyContent: 'center' }}

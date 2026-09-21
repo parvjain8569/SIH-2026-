@@ -24,6 +24,9 @@ import DocumentReviewPage from './components/DocumentReviewPage'
 import FetchingDetailsOverlay from './components/FetchingDetailsOverlay'
 import CaptchaVerification from './components/CaptchaModal'
 
+// ── Supabase Database & Storage Services ───────────────────────
+import { getLandRecords, saveLandRecord, subscribeToRecordChanges } from './services/recordService'
+
 // ── Initial Sample Records for Demo Registry ───────────────────
 const INITIAL_RECORDS = [
   { id: 'REC-20391', ownerName: 'Ramesh Kumar', parcelId: 'HR-20391', date: '04 Sep 2026', status: 'Verified', khasraNo: '45/12', district: 'Gurugram', state: 'Haryana', area: '2.45 Acres', documentName: 'khasra_khatouni_ramesh.pdf' },
@@ -104,6 +107,33 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
   const [selectedRecordForModal, setSelectedRecordForModal] = useState(null)
   const [showModal, setShowModal] = useState(false)
   const [showAuthPromptModal, setShowAuthPromptModal] = useState(false)
+
+  // ── Load Land Records from Supabase on mount ───────────────────────────────
+  useEffect(() => {
+    let isMounted = true
+    const loadRecords = async () => {
+      try {
+        const fetched = await getLandRecords()
+        if (isMounted && fetched && fetched.length > 0) {
+          setRecords(fetched)
+        }
+      } catch (err) {
+        console.warn('[BhoomIntelli] Error fetching records from Supabase:', err)
+      }
+    }
+
+    loadRecords()
+
+    // Realtime postgres changes subscription
+    const unsubscribe = subscribeToRecordChanges(() => {
+      loadRecords()
+    })
+
+    return () => {
+      isMounted = false
+      unsubscribe()
+    }
+  }, [])
 
   // ── New: Fetching overlay + Document Review page + CAPTCHA ───────────────
   const [showFetching, setShowFetching] = useState(false)
@@ -264,18 +294,38 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
     const newRecord = {
       id: 'REC-' + Math.floor(10000 + Math.random() * 90000),
       ownerName: profileData.name || user?.name || user?.username || 'Authorized Landholder',
+      userEmail: profileData.email || user?.email || 'citizen@bhoomintelli.in',
       parcelId: newParcelId,
       date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       status: 'Verified',
       khasraNo: `${Math.floor(20 + Math.random() * 150)}/${Math.floor(1 + Math.random() * 15)}`,
-      district: profileData.district || 'Varanasi',
-      state: profileData.state || 'Uttar Pradesh',
+      khatouniNo: `KH-${Math.floor(100 + Math.random() * 900)}`,
+      tehsil: 'Gurugram Sadar',
+      village: 'Khandsa',
+      district: profileData.district || 'Gurugram',
+      state: profileData.state || 'Haryana',
       area: '2.1 Hectares',
+      disputeStatus: 'Clear',
+      verifiedBy: 'Tehsildar Office (Revenue Registry)',
       documentName: file.name,
       fileSize: sizeStr,
       isNew: true,
     }
     setRecords((prev) => [newRecord, ...prev])
+
+    // Save record row to Supabase PostgreSQL & upload document to Storage
+    saveLandRecord(file, newRecord)
+      .then((saved) => {
+        if (saved) {
+          setRecords((curr) =>
+            curr.map((r) => (r.id === newRecord.id ? { ...r, ...saved } : r))
+          )
+        }
+      })
+      .catch((err) => {
+        console.warn('[BhoomIntelli] Supabase record save warning:', err)
+      })
+
     setNotifications((prev) => [{
       id: 'n-' + Date.now(),
       type: 'processing',
