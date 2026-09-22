@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: bhoomintelli-ocr
+    env: docker
+    rootDir: ocr-service
+    plan: free
+    envVars:
+      - key: PORT
+        value: "3001"
+      - key: ALLOWED_ORIGINS
+        value: "http://localhost:5173,https://*.vercel.app"
