@@ -306,6 +306,7 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
     setShowFetching(true)
 
     let extracted = null;
+    let ocrSuccess = false;
     
     try {
       const formData = new FormData()
@@ -320,32 +321,47 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
       if (response.ok) {
         const result = await response.json()
         extracted = result.data || {}
-        setExtractedOcrData(extracted)
-      } else {
-        setExtractedOcrData(null)
+        
+        // Validate that OCR actually found land record fields
+        // At least one key field must be present and not empty
+        const hasOwner = extracted.ownerName && extracted.ownerName.trim() !== ''
+        const hasKhasra = extracted.khasraNo && extracted.khasraNo.trim() !== ''
+        const hasArea = extracted.area && extracted.area.trim() !== ''
+        const hasDate = extracted.date && extracted.date.trim() !== ''
+        const hasKhata = extracted.khataNo && extracted.khataNo.trim() !== ''
+        
+        ocrSuccess = hasOwner || hasKhasra || hasArea || hasDate || hasKhata
       }
     } catch (err) {
       console.error('[BhoomIntelli] OCR API Error:', err)
-      setExtractedOcrData(null)
     }
 
-    // Create a pending record, but DO NOT save it to the database yet.
-    // The user must first review and accept the OCR results.
+    // If OCR failed or document is not a valid land record → show popup and abort
+    if (!ocrSuccess || !extracted) {
+      setShowFetching(false)
+      setShowInvalidDocPopup(true)
+      e.target.value = '' // Reset file input
+      return
+    }
+
+    setExtractedOcrData(extracted)
+
+    // Create a pending record using ONLY real OCR-extracted data
     const newParcelId = 'HR-' + Math.floor(21000 + Math.random() * 8000)
     const newRecord = {
       id: 'REC-' + Math.floor(10000 + Math.random() * 90000),
-      ownerName: extracted?.ownerName || profileData.name || user?.name || user?.username || 'Authorized Landholder',
+      ownerName: extracted.ownerName || profileData.name || user?.name || 'Landholder',
       userEmail: profileData.email || user?.email || 'citizen@bhoomintelli.in',
       parcelId: newParcelId,
-      date: extracted?.date || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      date: extracted.date || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       status: 'Verified',
-      khasraNo: extracted?.khasraNo || `${Math.floor(20 + Math.random() * 150)}/${Math.floor(1 + Math.random() * 15)}`,
-      khatouniNo: extracted?.khataNo || `KH-${Math.floor(100 + Math.random() * 900)}`,
+      khasraNo: extracted.khasraNo || 'Pending Verification',
+      khatouniNo: extracted.khataNo || 'Pending Verification',
       tehsil: 'Gurugram Sadar',
       village: 'Khandsa',
-      district: extracted?.district || profileData.district || 'Gurugram',
-      state: extracted?.state || profileData.state || 'Haryana',
-      area: extracted?.area || '2.1 Hectares',
+      district: extracted.district || profileData.district || 'Gurugram',
+      state: extracted.state || profileData.state || 'Haryana',
+      area: extracted.area || 'Pending Verification',
       disputeStatus: 'Clear',
       verifiedBy: 'Tehsildar Office (Revenue Registry)',
       documentName: file.name,
@@ -396,29 +412,45 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
       {showInvalidDocPopup && (
         <div style={{
           position: 'fixed', inset: 0, zIndex: 10000,
-          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(0,0,0,0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          backdropFilter: 'blur(4px)',
         }}>
           <div style={{
-            background: 'white', borderRadius: '16px', padding: '32px 28px', maxWidth: '420px', width: '90%',
+            background: 'white', borderRadius: '18px', padding: '36px 30px', maxWidth: '440px', width: '90%',
             textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+            animation: 'fadeIn 0.2s ease-out',
           }}>
-            <div style={{ fontSize: '48px', marginBottom: '12px' }}>⚠️</div>
-            <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: '#0f172a', fontWeight: 700 }}>
-              Invalid Document
+            <div style={{
+              width: '64px', height: '64px', borderRadius: '50%', background: '#fef2f2',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              margin: '0 auto 16px',
+            }}>
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#dc2626" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <line x1="15" y1="9" x2="9" y2="15" />
+                <line x1="9" y1="9" x2="15" y2="15" />
+              </svg>
+            </div>
+            <h3 style={{ margin: '0 0 8px', fontSize: '19px', color: '#0f172a', fontWeight: 700 }}>
+              Invalid Land Document
             </h3>
-            <p style={{ margin: '0 0 20px', fontSize: '14px', color: '#64748b', lineHeight: 1.5 }}>
-              Please upload a valid land record document.<br />
-              Accepted formats: <strong>PDF, JPG, JPEG, PNG</strong><br />
-              Word documents (.doc, .docx) are not supported.
+            <p style={{ margin: '0 0 8px', fontSize: '14px', color: '#64748b', lineHeight: 1.6 }}>
+              The uploaded file could not be recognized as a valid land record document. 
+              Our AI could not extract any land-related information from it.
+            </p>
+            <p style={{ margin: '0 0 22px', fontSize: '13px', color: '#94a3b8', lineHeight: 1.5 }}>
+              Please upload a valid <strong>Khasra, Khatouni, Sale Deed, Mutation Record, or Registry Document</strong> in <strong>PDF, JPG, or PNG</strong> format.
             </p>
             <button
               onClick={() => setShowInvalidDocPopup(false)}
               style={{
-                background: '#0f172a', color: 'white', border: 'none', borderRadius: '10px',
-                padding: '10px 32px', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                background: 'linear-gradient(135deg, #0f172a, #1e293b)', color: 'white',
+                border: 'none', borderRadius: '12px', padding: '12px 36px',
+                fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+                boxShadow: '0 4px 12px rgba(15,23,42,0.3)',
               }}
             >
-              Try Again
+              Upload Another Document
             </button>
           </div>
         </div>

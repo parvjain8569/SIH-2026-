@@ -1,27 +1,18 @@
 import { useState } from 'react'
 import { useLanguage } from '../i18n/LanguageContext'
 
-// ── Fallback AI-extracted fields (used when no OCR data available) ─────────
-const INITIAL_FIELDS = [
-  { id: 'owner',    label: 'Owner Name',    value: 'Suresh Kumar',   reviewState: 'PENDING' },
-  { id: 'khasra',  label: 'Khasra Number', value: '128/3',          reviewState: 'PENDING' },
-  { id: 'area',    label: 'Plot Area',     value: '2.1 Hectares',   reviewState: 'PENDING' },
-  { id: 'date',    label: 'Deed Date',     value: '12/05/2023',     reviewState: 'PENDING' },
-  { id: 'mutation',label: 'Mutation ID',   value: 'MUT-2023-4421',  reviewState: 'PENDING' },
-]
-
 // ────────────────────────────────────────────────────────────────────────────
 export default function DocumentReviewPage({ onBack, onAccept, onReject, uploadedFileName, extractedData, filePreviewUrl, fileType }) {
   const { t } = useLanguage()
   
-  // Use real extracted data if available, fallback to demo data otherwise
-  const initialFields = extractedData ? [
-    { id: 'owner',    label: 'Owner Name',    value: extractedData.ownerName || 'Not Found', reviewState: 'PENDING' },
-    { id: 'khasra',   label: 'Khasra Number', value: extractedData.khasraNo || 'Not Found',  reviewState: 'PENDING' },
-    { id: 'area',     label: 'Plot Area',     value: extractedData.area || 'Not Found',      reviewState: 'PENDING' },
-    { id: 'date',     label: 'Deed Date',     value: extractedData.date || 'Not Found',      reviewState: 'PENDING' },
-    { id: 'mutation', label: 'Khata Number',  value: extractedData.khataNo || 'Not Found',   reviewState: 'PENDING' },
-  ] : INITIAL_FIELDS
+  // Build fields from real OCR-extracted data only (no fake fallback)
+  const initialFields = [
+    { id: 'owner',    label: 'Owner Name',    value: extractedData?.ownerName || 'Not Found', reviewState: 'PENDING' },
+    { id: 'khasra',   label: 'Khasra Number', value: extractedData?.khasraNo || 'Not Found',  reviewState: 'PENDING' },
+    { id: 'area',     label: 'Plot Area',     value: extractedData?.area || 'Not Found',      reviewState: 'PENDING' },
+    { id: 'date',     label: 'Deed Date',     value: extractedData?.date || 'Not Found',      reviewState: 'PENDING' },
+    { id: 'mutation', label: 'Khata Number',  value: extractedData?.khataNo || 'Not Found',   reviewState: 'PENDING' },
+  ]
 
   const [fields, setFields] = useState(initialFields)
   const [submitted, setSubmitted] = useState(false)
