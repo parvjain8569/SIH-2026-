@@ -3,6 +3,7 @@ import './login.css'
 import { extractCleanUsername, formatDisplayName } from './utils/userUtils'
 import { useLanguage } from './i18n/LanguageContext'
 import { generateMockAadhaarData } from './utils/userUtils'
+import { authService } from './services/authService'
 
 export default function Login({ onLoginSuccess, onBackToWebsite, initialView = 'create' }) {
   // Views: 'create' | 'otp' | 'aadhaar_kyc' | 'signin' | 'forgot_email' | 'forgot_otp' | 'forgot_reset'
@@ -51,6 +52,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
 
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [isLoading, setIsLoading] = useState(false)
 
   // ── Security: Password Strength ──────────────────────────────────
   const getPasswordStrength = (pwd) => {
@@ -130,8 +132,8 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
     setView('otp')
   }
 
-  // Handle OTP verification -> Leads to "Sign In"
-  const handleVerifyOtp = (e) => {
+  // Handle OTP verification -> Registers account and leads to Aadhaar KYC
+  const handleVerifyOtp = async (e) => {
     e.preventDefault()
     setError('')
 
@@ -141,14 +143,27 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
       return
     }
 
-    // Accept mock OTP or any 6 digits for testing → go to Aadhaar KYC step
-    setSuccess('Email verified! Complete Aadhaar verification or skip to continue.')
-    setError('')
-    setView('aadhaar_kyc')
+    setIsLoading(true)
+    try {
+      // Register the account in the database
+      await authService.register({
+        name: formData.name.trim(),
+        surname: formData.surname.trim(),
+        email: formData.email.trim(),
+        password: formData.password,
+      })
+      setIsLoading(false)
+      setSuccess('Account created! Complete Aadhaar verification or skip to continue.')
+      setError('')
+      setView('aadhaar_kyc')
+    } catch (err) {
+      setIsLoading(false)
+      setError(err.message || 'Registration failed. Please try again.')
+    }
   }
 
-  // Handle Aadhaar KYC verification (mock)
-  const handleAadhaarVerify = () => {
+  // Handle Aadhaar KYC verification
+  const handleAadhaarVerify = async () => {
     const cleaned = aadhaarInput.replace(/\s/g, '')
     if (cleaned.length !== 12 || !/^\d+$/.test(cleaned)) {
       setError('Please enter a valid 12-digit Aadhaar number.')
@@ -156,23 +171,29 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
     }
     setError('')
     setAadhaarVerifying(true)
-    // Simulate verification delay
-    setTimeout(() => {
+    
+    // Simulate verification delay then update database
+    setTimeout(async () => {
+      const mockData = generateMockAadhaarData(cleaned)
       setAadhaarVerifying(false)
-      setAadhaarVerifiedData(generateMockAadhaarData(cleaned))
-      setSuccess('Aadhaar verified successfully! You can now sign in.')
+      setAadhaarVerifiedData(mockData)
+
+      // Save to database
+      await authService.updateAadhaar(formData.email.trim(), mockData)
+
+      setSuccess('Aadhaar verified and linked to your account! You can now sign in.')
       setView('signin')
-    }, 2000)
+    }, 1500)
   }
 
   const handleSkipAadhaar = () => {
-    setSuccess('You can verify your Aadhaar later from your Profile. Please sign in.')
+    setSuccess('Account ready! You can verify your Aadhaar anytime from Profile. Please sign in.')
     setError('')
     setView('signin')
   }
 
-  // Handle "Sign In" submission -> Leads back to main website as authenticated user
-  const handleSignIn = (e) => {
+  // Handle "Sign In" submission -> Verifies credentials in database
+  const handleSignIn = async (e) => {
     e.preventDefault()
     setError('')
 
@@ -185,8 +206,16 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
       return
     }
 
-    // Demo: simulate wrong password if password is literally 'wrong'
-    if (password === 'wrong') {
+    setIsLoading(true)
+    try {
+      const result = await authService.login(email.trim(), password)
+      setIsLoading(false)
+
+      if (onLoginSuccess && result.user) {
+        onLoginSuccess(result.user)
+      }
+    } catch (err) {
+      setIsLoading(false)
       const newFails = failedAttempts + 1
       setFailedAttempts(newFails)
       if (newFails >= 3) {
@@ -194,24 +223,8 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
         setLockoutSeconds(30)
         setError('Account locked due to too many failed attempts. Try again in 30 seconds.')
       } else {
-        setError(`Invalid credentials. ${3 - newFails} attempt(s) remaining.`)
+        setError(`${err.message || 'Invalid email or password.'} ${3 - newFails} attempt(s) remaining.`)
       }
-      return
-    }
-
-    if (onLoginSuccess) {
-      const emailTrimmed = email.trim()
-      const username = extractCleanUsername(emailTrimmed)
-      const uName = formData.name || formatDisplayName(username)
-      
-      const payload = {
-        name: uName,
-        username: username,
-        email: emailTrimmed,
-        aadhaarVerified: !!aadhaarVerifiedData,
-        aadhaarDetails: aadhaarVerifiedData
-      }
-      onLoginSuccess(payload)
     }
   }
 
@@ -248,8 +261,8 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
     setView('forgot_reset')
   }
 
-  // Handle Forgot Password - Save New Password
-  const handleResetPassword = (e) => {
+  // Handle Forgot Password - Save New Password in database
+  const handleResetPassword = async (e) => {
     e.preventDefault()
     setError('')
 
@@ -263,15 +276,24 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
       return
     }
 
-    // Password reset successful -> populate email for sign-in and direct back to signin view
-    setFormData((prev) => ({
-      ...prev,
-      email: forgotEmail.trim(),
-      password: '',
-    }))
-    setSuccess('Password updated successfully! You can now sign in with your new password.')
-    setError('')
-    setView('signin')
+    setIsLoading(true)
+    try {
+      await authService.resetPassword(forgotEmail.trim(), newPassword)
+      setIsLoading(false)
+
+      // Password reset successful -> populate email for sign-in and direct back to signin view
+      setFormData((prev) => ({
+        ...prev,
+        email: forgotEmail.trim(),
+        password: '',
+      }))
+      setSuccess('Password updated successfully! You can now sign in with your new password.')
+      setError('')
+      setView('signin')
+    } catch (err) {
+      setIsLoading(false)
+      setError(err.message || 'Failed to reset password.')
+    }
   }
 
   return (
@@ -463,8 +485,8 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                 ))}
               </div>
 
-              <button type="submit" className="auth-btn-primary">
-                {t('login.verifyOtpBtn')}
+              <button type="submit" className="auth-btn-primary" disabled={isLoading}>
+                {isLoading ? 'Verifying & Creating Account...' : t('login.verifyOtpBtn')}
               </button>
             </form>
 
@@ -635,8 +657,8 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                 />
               </div>
 
-              <button type="submit" className="auth-btn-primary" disabled={isLockedOut}>
-                {isLockedOut ? `Locked (${lockoutSeconds}s)` : t('login.signInBtn')}
+              <button type="submit" className="auth-btn-primary" disabled={isLockedOut || isLoading}>
+                {isLockedOut ? `Locked (${lockoutSeconds}s)` : isLoading ? 'Signing In...' : t('login.signInBtn')}
               </button>
             </form>
 
@@ -866,8 +888,8 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                 />
               </div>
 
-              <button type="submit" className="auth-btn-primary">
-                {t('login.changePasswordSignInBtn')}
+              <button type="submit" className="auth-btn-primary" disabled={isLoading}>
+                {isLoading ? 'Updating Password...' : t('login.changePasswordSignInBtn')}
               </button>
             </form>
 

@@ -1,0 +1,28 @@
+{
+  "users": [
+    {
+      "id": "USR-1001",
+      "email": "dev@bhoomintelli.in",
+      "name": "Dev User",
+      "surname": "Tester",
+      "username": "devuser",
+      "salt": "a31522902362f890ee133dd759e557f5",
+      "passwordHash": "23b26eed72b0fa25a17dd46a6f744acb553e49262591837ce0ecc157dd7b31c5e0123b9fc0d85b9f3b2aa517ce156e22913528e5cbe6db36b2345608fb28e5f1",
+      "aadhaarVerified": true,
+      "aadhaarDetails": {
+        "aadhaarNumber": "234567891234",
+        "formattedAadhaar": "2345 6789 1234",
+        "maskedAadhaar": "XXXX XXXX 1234",
+        "name": "Dev User",
+        "dob": "15/06/1995",
+        "gender": "Male",
+        "address": "Village Khandsa, Gurugram",
+        "district": "Gurugram",
+        "state": "Haryana",
+        "pincode": "122001",
+        "contact": "9876543210"
+      },
+      "createdAt": "2026-09-01T00:00:00.000Z"
+    }
+  ]
+}
