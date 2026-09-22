@@ -3,6 +3,7 @@ import Login from './login.jsx'
 import Website from './website.jsx'
 import LanguageSelectModal from './components/modals/LanguageSelectModal.jsx'
 import { supabase } from './lib/supabase.js'
+import { generateMockAadhaarData } from './utils/userUtils.js'
 import './login.css'
 import './App.css'
 
@@ -77,6 +78,13 @@ export default function App() {
         return
       }
 
+      let mockDetails = {}
+      if (data.aadhaar_number) {
+        mockDetails = generateMockAadhaarData(data.aadhaar_number, data.name)
+        // Ensure the phone number from the DB is prioritized
+        mockDetails.contact = data.phone_number || mockDetails.contact
+      }
+
       // Map Supabase profile to our expected user format
       setCurrentUser({
         email: data.email,
@@ -84,11 +92,12 @@ export default function App() {
         username: data.email?.split('@')[0],
         aadhaarVerified: data.aadhaar_verified,
         aadhaarDetails: {
+          ...mockDetails,
           aadhaarNumber: data.aadhaar_number,
           formattedAadhaar: data.aadhaar_number?.replace(/(\d{4})(?=\d)/g, '$1 '),
           maskedAadhaar: `XXXX XXXX ${data.aadhaar_number?.slice(-4)}`,
           name: data.name,
-          contact: data.phone_number
+          contact: data.phone_number || mockDetails.contact
         }
       })
     } catch (err) {

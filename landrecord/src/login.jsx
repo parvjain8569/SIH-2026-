@@ -53,6 +53,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
 
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
 
   // ── Security: Password Strength ──────────────────────────────────
   const getPasswordStrength = (pwd) => {
@@ -132,7 +133,6 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
     setView('aadhaar_kyc')
   }
 
-  // Handle Aadhaar KYC verification (mock)
   const handleAadhaarVerify = async () => {
     const cleaned = aadhaarInput.replace(/\s/g, '')
     if (cleaned.length !== 12 || !/^\d+$/.test(cleaned)) {
@@ -147,6 +147,24 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
     const existingName = formData.name ? `${formData.name} ${formData.surname}`.trim() : null
     const mockData = generateMockAadhaarData(cleaned, existingName)
 
+    setAadhaarVerifying(false)
+    setAadhaarVerifiedData(mockData)
+    setMfaPhone(mockData.contact)
+    setOtpDigits(['', '', '', '', '', ''])
+    setSuccess(`OTP sent to your Aadhaar-linked mobile number ending in ${mockData.contact.slice(-4)}`)
+    setView('aadhaar_otp')
+  }
+
+  const handleAadhaarOtpVerify = async (e) => {
+    e.preventDefault()
+    setError('')
+
+    const enteredOtp = otpDigits.join('')
+    if (enteredOtp.length < 6) {
+      setError('Please enter the complete 6-digit OTP code.')
+      return
+    }
+
     // Sign up with Supabase Auth
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email: formData.email,
@@ -154,7 +172,6 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
     })
 
     if (authError) {
-      setAadhaarVerifying(false)
       setError(`Signup failed: ${authError.message}`)
       return
     }
@@ -164,10 +181,10 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
       const { error: profileError } = await supabase.from('profiles').insert([
         {
           id: authData.user.id,
-          name: mockData.name,
+          name: aadhaarVerifiedData.name,
           email: formData.email,
-          phone_number: mockData.contact,
-          aadhaar_number: cleaned,
+          phone_number: aadhaarVerifiedData.contact,
+          aadhaar_number: aadhaarInput.replace(/\s/g, ''),
           aadhaar_verified: true,
         }
       ])
@@ -177,8 +194,6 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
       }
     }
 
-    setAadhaarVerifying(false)
-    setAadhaarVerifiedData(mockData)
     setSuccess('Aadhaar verified & Account created successfully! Please sign in.')
     setView('signin')
   }
@@ -401,17 +416,40 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                 <label className="auth-label" htmlFor="password">
                   {t('login.passwordLabel')}
                 </label>
-                <input
-                  id="password"
-                  type="password"
-                  name="password"
-                  className="auth-input"
-                  placeholder={t('login.passwordPlaceholder')}
-                  value={formData.password}
-                  onChange={handleChange}
-                  autoComplete="new-password"
-                  required
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    className="auth-input"
+                    placeholder={t('login.passwordPlaceholder')}
+                    value={formData.password}
+                    onChange={handleChange}
+                    autoComplete="new-password"
+                    required
+                    style={{ paddingRight: '2.5rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '0.75rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#64748b'
+                    }}
+                  >
+                    {showPassword ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                    )}
+                  </button>
+                </div>
                 {formData.password && (
                   <div className="pwd-strength-wrap">
                     <div className="pwd-strength-bar">
@@ -616,6 +654,87 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
         )}
 
         {/* ============================================================
+            VIEW: AADHAAR OTP VERIFICATION (during registration)
+            ============================================================ */}
+        {view === 'aadhaar_otp' && (
+          <div>
+            <div className="auth-badge">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                <line x1="12" y1="18" x2="12.01" y2="18"></line>
+              </svg>
+            </div>
+
+            <h1 className="auth-title">Aadhaar OTP Verification</h1>
+            <p className="auth-subtitle">
+              Enter the verification code sent to your Aadhaar-linked mobile number ending in{' '}
+              <strong style={{ color: '#0f172a' }}>{mfaPhone ? mfaPhone.slice(-4) : 'XXXX'}</strong>.
+            </p>
+
+            {error && <div className="auth-alert auth-alert-error">{error}</div>}
+            {success && <div className="auth-alert auth-alert-success">{success}</div>}
+
+            <div className="auth-demo-otp-pill">
+              Mock OTP: <strong>123456</strong>
+            </div>
+
+            <form onSubmit={handleAadhaarOtpVerify}>
+              <div className="auth-otp-row">
+                {[0, 1, 2, 3, 4, 5].map((idx) => (
+                  <input
+                    key={idx}
+                    id={`aadhaar-otp-${idx}`}
+                    type="text"
+                    maxLength={1}
+                    className="auth-otp-input"
+                    value={otpDigits[idx]}
+                    onChange={(e) => {
+                      const val = e.target.value.slice(-1)
+                      const newArr = [...otpDigits]
+                      newArr[idx] = val
+                      setOtpDigits(newArr)
+                      if (val && idx < 5) {
+                        document.getElementById(`aadhaar-otp-${idx + 1}`)?.focus()
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Backspace' && !otpDigits[idx] && idx > 0) {
+                        document.getElementById(`aadhaar-otp-${idx - 1}`)?.focus()
+                      }
+                    }}
+                    required
+                  />
+                ))}
+              </div>
+
+              <button type="submit" className="auth-btn-primary">
+                Verify & Create Account
+              </button>
+            </form>
+
+            <div className="auth-footer">
+              Didn't receive code?{' '}
+              <button
+                type="button"
+                className="auth-link"
+                onClick={() => setSuccess(`New OTP code sent to your mobile number.`)}
+              >
+                Resend OTP
+              </button>
+              <br />
+              <button
+                type="button"
+                className="auth-link"
+                style={{ marginTop: '8px', display: 'inline-block' }}
+                onClick={() => setView('aadhaar_kyc')}
+              >
+                Cancel and Return to Aadhaar Input
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ============================================================
             VIEW 3: SIGN IN SCREEN WITH FORGOT PASSWORD LINK
             ============================================================ */}
         {view === 'signin' && (
@@ -668,17 +787,40 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                     {t('login.forgotPasswordLink')}
                   </button>
                 </div>
-                <input
-                  id="signin-password"
-                  type="password"
-                  name="password"
-                  className="auth-input"
-                  placeholder={t('login.signInPasswordPlaceholder')}
-                  value={formData.password}
-                  onChange={handleChange}
-                  autoComplete="current-password"
-                  required
-                />
+                <div style={{ position: 'relative' }}>
+                  <input
+                    id="signin-password"
+                    type={showPassword ? 'text' : 'password'}
+                    name="password"
+                    className="auth-input"
+                    placeholder={t('login.signInPasswordPlaceholder')}
+                    value={formData.password}
+                    onChange={handleChange}
+                    autoComplete="current-password"
+                    required
+                    style={{ paddingRight: '2.5rem' }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    style={{
+                      position: 'absolute',
+                      right: '0.75rem',
+                      top: '50%',
+                      transform: 'translateY(-50%)',
+                      background: 'none',
+                      border: 'none',
+                      cursor: 'pointer',
+                      color: '#64748b'
+                    }}
+                  >
+                    {showPassword ? (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                    )}
+                  </button>
+                </div>
               </div>
 
               <button type="submit" className="auth-btn-primary" disabled={isLockedOut}>

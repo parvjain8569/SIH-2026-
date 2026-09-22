@@ -1,29 +1,7 @@
 import { useState } from 'react'
 import { useLanguage } from '../i18n/LanguageContext'
 
-// ── Fixed demo document content ───────────────────────────────────────────
-const DEMO_DOCUMENT = {
-  title: 'Document Review: Deed-142 (Varanasi District)',
-  type: 'DEED OF CONVEYANCE',
-  body: [
-    { text: 'This Deed of Conveyance is made on this ', plain: true },
-    { text: '12/05/2023', highlight: 'date', label: 'Date' },
-    { text: ' between the parties.', plain: true },
-  ],
-  parties: [
-    { text: 'The Vendor, ', plain: true },
-    { text: 'Suresh Kumar', highlight: 'owner', label: 'Owner' },
-    { text: ', hereby agrees to sell, transfer and convey the property situated at Varanasi District.', plain: true },
-  ],
-  propertyLines: [
-    { label: 'Khasra Number:', value: '128/3', highlight: 'khasra' },
-    { label: 'Plot Area:', value: '2.1 Hectares', highlight: 'area' },
-    { label: 'Previous Mutation ID:', value: 'M-341', highlight: 'mutation-old' },
-    { label: 'New Mutation Request:', value: 'MUT-2023-4421', highlight: 'mutation-new' },
-  ],
-}
-
-// ── Fixed AI-extracted fields (no editing state) ──────────────────────────
+// ── Fallback AI-extracted fields (used when no OCR data available) ─────────
 const INITIAL_FIELDS = [
   { id: 'owner',    label: 'Owner Name',    value: 'Suresh Kumar',   reviewState: 'PENDING' },
   { id: 'khasra',  label: 'Khasra Number', value: '128/3',          reviewState: 'PENDING' },
@@ -32,17 +10,8 @@ const INITIAL_FIELDS = [
   { id: 'mutation',label: 'Mutation ID',   value: 'MUT-2023-4421',  reviewState: 'PENDING' },
 ]
 
-const HIGHLIGHT_COLORS = {
-  owner:           { bg: '#dcfce7', border: '#86efac', text: '#166534' },
-  khasra:          { bg: '#fef9c3', border: '#fde047', text: '#713f12' },
-  area:            { bg: '#d1fae5', border: '#6ee7b7', text: '#065f46' },
-  date:            { bg: '#fef3c7', border: '#fcd34d', text: '#92400e' },
-  'mutation-old':  { bg: '#fee2e2', border: '#fca5a5', text: '#991b1b' },
-  'mutation-new':  { bg: '#fce7f3', border: '#f9a8d4', text: '#9d174d' },
-}
-
 // ────────────────────────────────────────────────────────────────────────────
-export default function DocumentReviewPage({ onBack, uploadedFileName, extractedData }) {
+export default function DocumentReviewPage({ onBack, onAccept, onReject, uploadedFileName, extractedData, filePreviewUrl, fileType }) {
   const { t } = useLanguage()
   
   // Use real extracted data if available, fallback to demo data otherwise
@@ -56,7 +25,6 @@ export default function DocumentReviewPage({ onBack, uploadedFileName, extracted
 
   const [fields, setFields] = useState(initialFields)
   const [submitted, setSubmitted] = useState(false)
-  const [activeFieldId, setActiveFieldId] = useState(null)
 
   const updateField = (id, patch) =>
     setFields((prev) => prev.map((f) => (f.id === id ? { ...f, ...patch } : f)))
@@ -67,21 +35,15 @@ export default function DocumentReviewPage({ onBack, uploadedFileName, extracted
   const handleSubmitReview = () => {
     if (!allReviewed) return
     setSubmitted(true)
+    if (onAccept) onAccept(fields)
   }
 
-  // ── Highlighted inline token ──────────────────────────────────────────────
-  const HL = ({ id, children }) => {
-    const colors = HIGHLIGHT_COLORS[id] || {}
-    return (
-      <span
-        className={`doc-highlight ${activeFieldId === id ? 'doc-highlight-active' : ''}`}
-        style={{ background: colors.bg, borderBottom: `2px solid ${colors.border}`, color: colors.text }}
-        onClick={() => setActiveFieldId(id === activeFieldId ? null : id)}
-      >
-        {children}
-      </span>
-    )
+  const handleRejectReview = () => {
+    if (onReject) onReject()
   }
+
+  // Determine if the uploaded file is a PDF or an image
+  const isPdf = fileType === 'application/pdf' || uploadedFileName?.toLowerCase().endsWith('.pdf')
 
   return (
     <div className="doc-review-page">
@@ -93,7 +55,7 @@ export default function DocumentReviewPage({ onBack, uploadedFileName, extracted
           </svg>
           {t('review.backBtn')}
         </button>
-        <h1 className="doc-review-title">{DEMO_DOCUMENT.title}</h1>
+        <h1 className="doc-review-title">Document Review: {uploadedFileName || 'Uploaded Document'}</h1>
         {uploadedFileName && (
           <span className="doc-review-filename">📄 {uploadedFileName}</span>
         )}
@@ -111,7 +73,9 @@ export default function DocumentReviewPage({ onBack, uploadedFileName, extracted
           <h2 className="doc-success-heading">{t('review.successHeading')}</h2>
           <p className="doc-success-sub">{t('review.successSub').replace('{count}', fields.length)}</p>
           <div className="doc-success-badge">
-            <strong>{t('review.parcelId')}:</strong> HR-Deed-142 &nbsp;|&nbsp; <strong>{t('review.khasra')}:</strong> 128/3 &nbsp;|&nbsp; <strong>{t('review.owner')}:</strong> Suresh Kumar
+            <strong>Document:</strong> {uploadedFileName} &nbsp;|&nbsp;
+            <strong>{t('review.khasra')}:</strong> {fields.find(f => f.id === 'khasra')?.value || 'N/A'} &nbsp;|&nbsp;
+            <strong>{t('review.owner')}:</strong> {fields.find(f => f.id === 'owner')?.value || 'N/A'}
           </div>
           <button className="doc-success-back-btn" onClick={onBack}>
             {t('review.backHome')}
@@ -120,47 +84,52 @@ export default function DocumentReviewPage({ onBack, uploadedFileName, extracted
       ) : (
         <div className="doc-review-body">
 
-          {/* ── LEFT: Document Viewer ── */}
+          {/* ── LEFT: Actual Document Viewer ── */}
           <div className="doc-viewer-panel">
             <div className="doc-viewer-header">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
                 <polyline points="14 2 14 8 20 8" />
               </svg>
-              {t('review.viewerTitle')}
+              {t('review.viewerTitle')} — {uploadedFileName}
             </div>
-            <div className="doc-viewer-content">
-              <div className="doc-paper">
-                <h2 className="doc-paper-title">{DEMO_DOCUMENT.type}</h2>
-                <p className="doc-paper-para">
-                  {DEMO_DOCUMENT.body.map((t, i) =>
-                    t.plain ? <span key={i}>{t.text}</span> : <HL key={i} id={t.highlight}>{t.text}</HL>
-                  )}
-                </p>
-                <p className="doc-paper-para">
-                  {DEMO_DOCUMENT.parties.map((t, i) =>
-                    t.plain ? <span key={i}>{t.text}</span> : <HL key={i} id={t.highlight}>{t.text}</HL>
-                  )}
-                </p>
-                <div className="doc-paper-divider" />
-                <p className="doc-paper-section-title">{t('review.propDetails')}</p>
-                {DEMO_DOCUMENT.propertyLines.map((line) => (
-                  <p key={line.highlight} className="doc-paper-property-line">
-                    <span className="doc-prop-label">{line.label}</span>{' '}
-                    <HL id={line.highlight}>{line.value}</HL>
-                  </p>
-                ))}
-                <div className="doc-paper-sig-row">
-                  <div className="doc-sig-block">
-                    <div className="doc-sig-line" />
-                    <span>{t('review.sigVendor')}</span>
-                  </div>
-                  <div className="doc-sig-block">
-                    <div className="doc-sig-line" />
-                    <span>{t('review.sigVendee')}</span>
-                  </div>
+            <div className="doc-viewer-content" style={{ padding: 0, display: 'flex', alignItems: 'stretch', justifyContent: 'center', minHeight: '500px' }}>
+              {filePreviewUrl ? (
+                isPdf ? (
+                  /* PDF: Show in an iframe */
+                  <iframe
+                    src={filePreviewUrl}
+                    title="Uploaded Document Preview"
+                    style={{
+                      width: '100%', height: '100%', minHeight: '600px',
+                      border: 'none', borderRadius: '8px',
+                    }}
+                  />
+                ) : (
+                  /* Image: Show as an img tag */
+                  <img
+                    src={filePreviewUrl}
+                    alt="Uploaded Document Preview"
+                    style={{
+                      maxWidth: '100%', maxHeight: '700px',
+                      objectFit: 'contain', borderRadius: '8px',
+                      margin: '12px auto', display: 'block',
+                    }}
+                  />
+                )
+              ) : (
+                /* Fallback: No preview available */
+                <div style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  justifyContent: 'center', gap: '12px', padding: '40px', color: '#94a3b8',
+                }}>
+                  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" strokeWidth="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
+                  </svg>
+                  <span style={{ fontSize: '14px' }}>Document preview not available</span>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -191,8 +160,7 @@ export default function DocumentReviewPage({ onBack, uploadedFileName, extracted
               {fields.map((field) => (
                 <div
                   key={field.id}
-                  className={`doc-field-card ${field.reviewState === 'ACCEPTED' ? 'doc-field-accepted' : ''} ${field.reviewState === 'FLAGGED' ? 'doc-field-flagged' : ''} ${activeFieldId === field.id ? 'doc-field-active' : ''}`}
-                  onClick={() => setActiveFieldId(field.id === activeFieldId ? null : field.id)}
+                  className={`doc-field-card ${field.reviewState === 'ACCEPTED' ? 'doc-field-accepted' : ''} ${field.reviewState === 'FLAGGED' ? 'doc-field-flagged' : ''}`}
                 >
                   <div className="doc-field-card-top">
                     <span className="doc-field-label">{field.label}</span>
@@ -236,17 +204,27 @@ export default function DocumentReviewPage({ onBack, uploadedFileName, extracted
               ))}
             </div>
 
-            <div className="doc-submit-wrap">
+            <div className="doc-submit-wrap" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {!allReviewed && (
                 <p className="doc-submit-hint">{t('review.submitHint').replace('{count}', fields.length)}</p>
               )}
-              <button
-                className={`doc-submit-btn ${allReviewed ? 'doc-submit-ready' : 'doc-submit-disabled'}`}
-                onClick={handleSubmitReview}
-                disabled={!allReviewed}
-              >
-                {t('review.submitBtn')}
-              </button>
+              <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+                <button
+                  className="doc-submit-btn"
+                  style={{ background: '#dc2626', color: 'white', flex: 1, opacity: 1, cursor: 'pointer' }}
+                  onClick={handleRejectReview}
+                >
+                  Reject & Retry
+                </button>
+                <button
+                  className={`doc-submit-btn ${allReviewed ? 'doc-submit-ready' : 'doc-submit-disabled'}`}
+                  style={{ flex: 1 }}
+                  onClick={handleSubmitReview}
+                  disabled={!allReviewed}
+                >
+                  {t('review.submitBtn')}
+                </button>
+              </div>
             </div>
           </div>
 

@@ -142,6 +142,10 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
   const [reviewFileName, setReviewFileName] = useState(null)
   const [showCaptcha, setShowCaptcha] = useState(false)
   const [extractedOcrData, setExtractedOcrData] = useState(null)
+  const [pendingRecord, setPendingRecord] = useState(null)
+  const [pendingFile, setPendingFile] = useState(null)
+  const [filePreviewUrl, setFilePreviewUrl] = useState(null)
+  const [showInvalidDocPopup, setShowInvalidDocPopup] = useState(false)
 
   const stepsRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -277,6 +281,16 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
     const file = e.target.files?.[0]
     if (!file) return
 
+    // Validate file type — only accept PDF and images
+    const validTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png']
+    const validExtensions = ['.pdf', '.jpg', '.jpeg', '.png']
+    const ext = file.name.substring(file.name.lastIndexOf('.')).toLowerCase()
+    if (!validTypes.includes(file.type) && !validExtensions.includes(ext)) {
+      setShowInvalidDocPopup(true)
+      e.target.value = '' // Reset the file input
+      return
+    }
+
     const sizeStr = file.size > 1024 * 1024
       ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
       : `${(file.size / 1024).toFixed(1)} KB`
@@ -315,7 +329,8 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
       setExtractedOcrData(null)
     }
 
-    // Add to records immediately in background
+    // Create a pending record, but DO NOT save it to the database yet.
+    // The user must first review and accept the OCR results.
     const newParcelId = 'HR-' + Math.floor(21000 + Math.random() * 8000)
     const newRecord = {
       id: 'REC-' + Math.floor(10000 + Math.random() * 90000),
@@ -337,29 +352,13 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
       fileSize: sizeStr,
       isNew: true,
     }
-    setRecords((prev) => [newRecord, ...prev])
+    
+    setPendingRecord(newRecord)
+    setPendingFile(file)
 
-    // Save record row to Supabase PostgreSQL & upload document to Storage
-    saveLandRecord(file, newRecord)
-      .then((saved) => {
-        if (saved) {
-          setRecords((curr) =>
-            curr.map((r) => (r.id === newRecord.id ? { ...r, ...saved } : r))
-          )
-        }
-      })
-      .catch((err) => {
-        console.warn('[BhoomIntelli] Supabase record save warning:', err)
-      })
-
-    setNotifications((prev) => [{
-      id: 'n-' + Date.now(),
-      type: 'processing',
-      title: 'Document Uploaded & Digitized',
-      message: `${file.name} successfully parsed. Parcel ${newParcelId} created.`,
-      time: 'Just now',
-      unread: true,
-    }, ...prev])
+    // Create a preview URL for the actual uploaded document
+    const previewUrl = URL.createObjectURL(file)
+    setFilePreviewUrl(previewUrl)
 
     setShowFetching(false)
     setShowDocReview(true)
@@ -384,14 +383,46 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
   return (
     <div className="bhoomi-container">
 
-      {/* Hidden file input */}
+      {/* Hidden file input — only PDF and images, no Word files */}
       <input
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
+        accept=".pdf,.jpg,.jpeg,.png"
         style={{ display: 'none' }}
       />
+
+      {/* ── INVALID DOCUMENT POPUP ── */}
+      {showInvalidDocPopup && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 10000,
+          background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            background: 'white', borderRadius: '16px', padding: '32px 28px', maxWidth: '420px', width: '90%',
+            textAlign: 'center', boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '12px' }}>⚠️</div>
+            <h3 style={{ margin: '0 0 8px', fontSize: '18px', color: '#0f172a', fontWeight: 700 }}>
+              Invalid Document
+            </h3>
+            <p style={{ margin: '0 0 20px', fontSize: '14px', color: '#64748b', lineHeight: 1.5 }}>
+              Please upload a valid land record document.<br />
+              Accepted formats: <strong>PDF, JPG, JPEG, PNG</strong><br />
+              Word documents (.doc, .docx) are not supported.
+            </p>
+            <button
+              onClick={() => setShowInvalidDocPopup(false)}
+              style={{
+                background: '#0f172a', color: 'white', border: 'none', borderRadius: '10px',
+                padding: '10px 32px', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+              }}
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── CAPTCHA + OTP VERIFICATION (shown before file picker opens) ── */}
       {showCaptcha && (
@@ -413,7 +444,45 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
         <DocumentReviewPage
           uploadedFileName={reviewFileName}
           extractedData={extractedOcrData}
+          filePreviewUrl={filePreviewUrl}
+          fileType={pendingFile?.type}
+          onAccept={() => {
+            // Save to database ONLY after user accepts
+            if (pendingRecord && pendingFile) {
+              setRecords((prev) => [pendingRecord, ...prev])
+              saveLandRecord(pendingFile, pendingRecord)
+                .then((saved) => {
+                  if (saved) {
+                    setRecords((curr) =>
+                      curr.map((r) => (r.id === pendingRecord.id ? { ...r, ...saved } : r))
+                    )
+                  }
+                })
+                .catch((err) => {
+                  console.warn('[BhoomIntelli] Supabase record save warning:', err)
+                })
+
+              setNotifications((prev) => [{
+                id: 'n-' + Date.now(),
+                type: 'processing',
+                title: 'Document Uploaded & Digitized',
+                message: `${pendingFile.name} successfully parsed. Parcel ${pendingRecord.parcelId} created.`,
+                time: 'Just now',
+                unread: true,
+              }, ...prev])
+            }
+          }}
+          onReject={() => {
+            if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl)
+            setFilePreviewUrl(null)
+            setPendingRecord(null)
+            setPendingFile(null)
+            setShowDocReview(false)
+            setActiveNav('Home')
+          }}
           onBack={() => {
+            if (filePreviewUrl) URL.revokeObjectURL(filePreviewUrl)
+            setFilePreviewUrl(null)
             setShowDocReview(false)
             setActiveNav('My Records')
           }}
