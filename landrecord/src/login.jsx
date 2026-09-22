@@ -2,20 +2,22 @@ import { useState, useEffect, useRef } from 'react'
 import './login.css'
 import { extractCleanUsername, formatDisplayName } from './utils/userUtils'
 import { useLanguage } from './i18n/LanguageContext'
+import { supabase } from './lib/supabase.js'
 import { generateMockAadhaarData } from './utils/userUtils'
-
 export default function Login({ onLoginSuccess, onBackToWebsite, initialView = 'create' }) {
-  // Views: 'create' | 'otp' | 'aadhaar_kyc' | 'signin' | 'forgot_email' | 'forgot_otp' | 'forgot_reset'
+  // Views: 'create' | 'otp' | 'aadhaar_kyc' | 'signin' | 'forgot_email' | 'forgot_otp' | 'forgot_reset' | 'mfa_otp'
   const [view, setView] = useState(initialView)
   const { t } = useLanguage()
 
-  // Registration & Sign-in form state
+  // Form states
   const [formData, setFormData] = useState({
     name: '',
     surname: '',
     email: '',
     password: '',
   })
+  
+  const [mfaPhone, setMfaPhone] = useState('')
 
   // Registration 6-digit OTP state
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', ''])
@@ -102,7 +104,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
     if (error) setError('')
   }
 
-  // Handle "Create Account" submission -> Leads to OTP page
+  // Handle "Create Account" submission -> Leads to Aadhaar KYC
   const handleCreateAccount = (e) => {
     e.preventDefault()
     setError('')
@@ -125,30 +127,13 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
       return
     }
 
-    // Move to OTP verification step
-    setSuccess(`Verification code sent to ${email}`)
-    setView('otp')
-  }
-
-  // Handle OTP verification -> Leads to "Sign In"
-  const handleVerifyOtp = (e) => {
-    e.preventDefault()
-    setError('')
-
-    const enteredOtp = otpDigits.join('')
-    if (enteredOtp.length < 6) {
-      setError('Please enter the complete 6-digit OTP code.')
-      return
-    }
-
-    // Accept mock OTP or any 6 digits for testing → go to Aadhaar KYC step
-    setSuccess('Email verified! Complete Aadhaar verification or skip to continue.')
-    setError('')
+    // Move directly to Aadhaar KYC step
+    setSuccess('Basic details saved. Please verify your Aadhaar.')
     setView('aadhaar_kyc')
   }
 
   // Handle Aadhaar KYC verification (mock)
-  const handleAadhaarVerify = () => {
+  const handleAadhaarVerify = async () => {
     const cleaned = aadhaarInput.replace(/\s/g, '')
     if (cleaned.length !== 12 || !/^\d+$/.test(cleaned)) {
       setError('Please enter a valid 12-digit Aadhaar number.')
@@ -156,14 +141,46 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
     }
     setError('')
     setAadhaarVerifying(true)
-    // Simulate verification delay
-    setTimeout(() => {
+    
+    // Simulate verification delay & get mock data
+    await new Promise(resolve => setTimeout(resolve, 300))
+    const existingName = formData.name ? `${formData.name} ${formData.surname}`.trim() : null
+    const mockData = generateMockAadhaarData(cleaned, existingName)
+
+    // Sign up with Supabase Auth
+    const { data: authData, error: authError } = await supabase.auth.signUp({
+      email: formData.email,
+      password: formData.password,
+    })
+
+    if (authError) {
       setAadhaarVerifying(false)
-      const existingName = formData.name ? `${formData.name} ${formData.surname}`.trim() : null
-      setAadhaarVerifiedData(generateMockAadhaarData(cleaned, existingName))
-      setSuccess('Aadhaar verified successfully! You can now sign in.')
-      setView('signin')
-    }, 300)
+      setError(`Signup failed: ${authError.message}`)
+      return
+    }
+
+    // Save profile to Supabase public.profiles (if the table exists)
+    if (authData?.user) {
+      const { error: profileError } = await supabase.from('profiles').insert([
+        {
+          id: authData.user.id,
+          name: mockData.name,
+          email: formData.email,
+          phone_number: mockData.contact,
+          aadhaar_number: cleaned,
+          aadhaar_verified: true,
+        }
+      ])
+      
+      if (profileError) {
+        console.warn("Failed to create profile record", profileError)
+      }
+    }
+
+    setAadhaarVerifying(false)
+    setAadhaarVerifiedData(mockData)
+    setSuccess('Aadhaar verified & Account created successfully! Please sign in.')
+    setView('signin')
   }
 
   const handleSkipAadhaar = () => {
@@ -172,8 +189,8 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
     setView('signin')
   }
 
-  // Handle "Sign In" submission -> Leads back to main website as authenticated user
-  const handleSignIn = (e) => {
+  // Handle "Sign In" submission
+  const handleSignIn = async (e) => {
     e.preventDefault()
     setError('')
 
@@ -186,8 +203,12 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
       return
     }
 
-    // Demo: simulate wrong password if password is literally 'wrong'
-    if (password === 'wrong') {
+    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+      email: email.trim(),
+      password,
+    })
+
+    if (authError) {
       const newFails = failedAttempts + 1
       setFailedAttempts(newFails)
       if (newFails >= 3) {
@@ -200,19 +221,40 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
       return
     }
 
-    if (onLoginSuccess) {
-      const emailTrimmed = email.trim()
-      const username = extractCleanUsername(emailTrimmed)
-      const uName = formData.name || formatDisplayName(username)
+    // Instead of logging in immediately, fetch phone and ask for OTP
+    const { data: profileData } = await supabase
+      .from('profiles')
+      .select('phone_number')
+      .eq('id', authData.user.id)
+      .single()
       
-      const payload = {
-        name: uName,
-        username: username,
-        email: emailTrimmed,
-        aadhaarVerified: !!aadhaarVerifiedData,
-        aadhaarDetails: aadhaarVerifiedData
-      }
-      onLoginSuccess(payload)
+    if (profileData && profileData.phone_number) {
+       setMfaPhone(profileData.phone_number)
+       setOtpDigits(['', '', '', '', '', ''])
+       setView('mfa_otp')
+       setSuccess(`OTP sent to ${profileData.phone_number.substring(0, 3)}****${profileData.phone_number.slice(-4)}`)
+    } else {
+       // Fallback if no phone (maybe old user), just log them in
+       if (onLoginSuccess) onLoginSuccess(authData.user)
+    }
+  }
+
+  // Handle MFA OTP Verify
+  const handleVerifyMfaOtp = (e) => {
+    e.preventDefault()
+    setError('')
+
+    const enteredOtp = otpDigits.join('')
+    if (enteredOtp.length < 6) {
+      setError('Please enter the complete 6-digit OTP code.')
+      return
+    }
+
+    // Accept mock OTP
+    if (onLoginSuccess) {
+      // In a real app we'd fetch profile here, but for now we'll pass the user ID.
+      // We will let App.jsx fetch the real profile.
+      onLoginSuccess({}) // Empty object because Supabase session is now active
     }
   }
 
@@ -411,31 +453,31 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
         )}
 
         {/* ============================================================
-            VIEW 2: REGISTRATION EMAIL OTP VERIFICATION
+            VIEW 2: MFA MOBILE OTP VERIFICATION
             ============================================================ */}
-        {view === 'otp' && (
+        {view === 'mfa_otp' && (
           <div>
             <div className="auth-badge">
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                <polyline points="22,6 12,13 2,6"></polyline>
+                <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+                <line x1="12" y1="18" x2="12.01" y2="18"></line>
               </svg>
             </div>
 
-            <h1 className="auth-title">{t('login.verifyEmailTitle')}</h1>
+            <h1 className="auth-title">Two-Step Verification</h1>
             <p className="auth-subtitle">
-              {t('login.verifyEmailSubtitle1')}{' '}
-              <strong style={{ color: '#0f172a' }}>{formData.email || 'your email'}</strong>.
+              Enter the verification code sent to your Aadhaar-linked mobile number ending in{' '}
+              <strong style={{ color: '#0f172a' }}>{mfaPhone ? mfaPhone.slice(-4) : 'XXXX'}</strong>.
             </p>
 
             {error && <div className="auth-alert auth-alert-error">{error}</div>}
             {success && <div className="auth-alert auth-alert-success">{success}</div>}
 
             <div className="auth-demo-otp-pill">
-              {t('login.demoVerifyOtp')} <strong>{generatedOtp}</strong>
+              Mock OTP: <strong>123456</strong>
             </div>
 
-            <form onSubmit={handleVerifyOtp}>
+            <form onSubmit={handleVerifyMfaOtp}>
               <div className="auth-otp-row">
                 {[0, 1, 2, 3, 4, 5].map((idx) => (
                   <input
@@ -465,27 +507,30 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
               </div>
 
               <button type="submit" className="auth-btn-primary">
-                {t('login.verifyOtpBtn')}
+                Verify & Sign In
               </button>
             </form>
 
             <div className="auth-footer">
-              {t('login.didntReceiveCode')}{' '}
+              Didn't receive code?{' '}
               <button
                 type="button"
                 className="auth-link"
-                onClick={() => setSuccess(`New OTP code sent to ${formData.email}`)}
+                onClick={() => setSuccess(`New OTP code sent to your mobile number.`)}
               >
-                {t('login.resendOtp')}
+                Resend OTP
               </button>
               <br />
               <button
                 type="button"
                 className="auth-link"
                 style={{ marginTop: '8px', display: 'inline-block' }}
-                onClick={() => setView('create')}
+                onClick={() => {
+                  supabase.auth.signOut()
+                  setView('signin')
+                }}
               >
-                {t('login.editEmailLink')}
+                Cancel and Return to Sign In
               </button>
             </div>
           </div>

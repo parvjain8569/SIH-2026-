@@ -129,25 +129,33 @@ function getApiBaseUrl() {
 /**
  * Fetch all land records from Supabase PostgreSQL database or local mock API
  */
-export async function getLandRecords() {
+export async function getLandRecords(userEmail = null) {
   if (!isSupabaseConfigured || !supabase) {
     try {
       const baseUrl = getApiBaseUrl()
       const res = await fetch(`${baseUrl}/api/records`)
       if (res.ok) {
-        return await res.json()
+        let json = await res.json()
+        if (userEmail) json = json.filter(r => r.userEmail === userEmail)
+        return json
       }
     } catch (err) {
       console.warn('Local mock API not reachable:', err)
     }
-    return DEFAULT_RECORDS
+    const filteredMock = userEmail ? DEFAULT_RECORDS.filter(r => r.userEmail === userEmail) : DEFAULT_RECORDS
+    return filteredMock
   }
 
   try {
-    const { data, error } = await supabase
-      .from('land_records')
-      .select('*')
-      .order('created_at', { ascending: false })
+    let query = supabase.from('land_records').select('*')
+    
+    // ENFORCE DATA ISOLATION: if userEmail is provided, filter records.
+    // In a real production app, this would be handled securely via Row Level Security (RLS) in the DB.
+    if (userEmail) {
+      query = query.eq('user_email', userEmail)
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false })
 
     if (error) {
       console.warn('[BhoomIntelli] Error reading from Supabase land_records table:', error.message)

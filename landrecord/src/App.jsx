@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Login from './login.jsx'
 import Website from './website.jsx'
 import LanguageSelectModal from './components/modals/LanguageSelectModal.jsx'
+import { supabase } from './lib/supabase.js'
 import './login.css'
 import './App.css'
 
@@ -29,70 +30,99 @@ export default function App() {
   // Default to 'website' when opening the site as requested!
   const [currentPage, setCurrentPage] = useState('website')
   const [devMode, setDevMode] = useState(() => {
-    try {
-      return localStorage.getItem('devMode') === 'true'
-    } catch {
-      return false
-    }
+    try { return localStorage.getItem('devMode') === 'true' } catch { return false }
   })
   
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      if (localStorage.getItem('devMode') === 'true') return getDevUser()
-      
-      const savedUser = localStorage.getItem('bhoomiUser')
-      return savedUser ? JSON.parse(savedUser) : null
-    } catch {
-      return null
-    }
-  })
+  const [currentUser, setCurrentUser] = useState(null)
   
-  const [authMode, setAuthMode] = useState('signin') // 'signin' or 'create'
-  // Always show language popup modal as soon as website opens so user doesn't have to search for option
+  const [authMode, setAuthMode] = useState('signin')
   const [showLangModal, setShowLangModal] = useState(true)
+
+  useEffect(() => {
+    if (devMode) {
+      setCurrentUser(getDevUser())
+      return
+    }
+
+    // Check active session on load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) fetchUserProfile(session.user)
+      else setCurrentUser(null)
+    })
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        fetchUserProfile(session.user)
+      } else {
+        setCurrentUser(null)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [devMode])
+
+  const fetchUserProfile = async (user) => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single()
+      
+      if (error) {
+        console.warn("Could not fetch profile:", error)
+        // Fallback to basic user data
+        setCurrentUser({ email: user.email, name: user.email })
+        return
+      }
+
+      // Map Supabase profile to our expected user format
+      setCurrentUser({
+        email: data.email,
+        name: data.name,
+        username: data.email?.split('@')[0],
+        aadhaarVerified: data.aadhaar_verified,
+        aadhaarDetails: {
+          aadhaarNumber: data.aadhaar_number,
+          formattedAadhaar: data.aadhaar_number?.replace(/(\d{4})(?=\d)/g, '$1 '),
+          maskedAadhaar: `XXXX XXXX ${data.aadhaar_number?.slice(-4)}`,
+          name: data.name,
+          contact: data.phone_number
+        }
+      })
+    } catch (err) {
+      console.error(err)
+    }
+  }
 
   const toggleDevMode = () => {
     const next = !devMode
     setDevMode(next)
-    try {
-      localStorage.setItem('devMode', String(next))
-    } catch {}
+    try { localStorage.setItem('devMode', String(next)) } catch {}
     window.dispatchEvent(new Event('devModeChange'))
-    
-    if (next) {
-      handleLoginSuccess(getDevUser())
-    } else {
-      handleLogout()
-    }
   }
 
-  // Called when user clicks "Login" or is asked to login before upload
   const handleOpenLogin = (mode = 'signin') => {
     setAuthMode(mode)
     setCurrentPage('auth')
   }
 
-  // Called when sign in succeeds -> leads to website as authenticated user
-  const handleLoginSuccess = (userData) => {
-    setCurrentUser(userData)
+  const handleLoginSuccess = () => {
+    // We don't need to manually set user here; onAuthStateChange will catch it!
     setCurrentPage('website')
-    try {
-      localStorage.setItem('bhoomiUser', JSON.stringify(userData))
-    } catch {}
   }
 
-  // Logout handler resets user and stays on website as guest
-  const handleLogout = () => {
-    setCurrentUser(null)
+  const handleLogout = async () => {
+    if (!devMode) {
+      await supabase.auth.signOut()
+    }
     setCurrentPage('website')
-    try {
-      localStorage.removeItem('bhoomiUser')
-      if (devMode) {
-        setDevMode(false)
-        localStorage.setItem('devMode', 'false')
-        window.dispatchEvent(new Event('devModeChange'))
-      }
-    } catch {}
+    if (devMode) {
+      setDevMode(false)
+      try { localStorage.setItem('devMode', 'false') } catch {}
+      window.dispatchEvent(new Event('devModeChange'))
+    }
   }
 
   return (

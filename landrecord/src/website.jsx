@@ -114,7 +114,7 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
     let isMounted = true
     const loadRecords = async () => {
       try {
-        const fetched = await getLandRecords()
+        const fetched = await getLandRecords(user?.email)
         if (isMounted && fetched && fetched.length > 0) {
           setRecords(fetched)
         }
@@ -134,7 +134,7 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
       isMounted = false
       unsubscribe()
     }
-  }, [])
+  }, [user?.email])
 
   // ── New: Fetching overlay + Document Review page + CAPTCHA ───────────────
   const [showFetching, setShowFetching] = useState(false)
