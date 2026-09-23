@@ -1,7 +1,7 @@
 {
-  "name": "random",
+  "name": "bhoomintelli-citizen",
   "private": true,
-  "version": "0.0.0",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -12,7 +12,6 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.116.0",
     "@vitalets/google-translate-api": "^9.2.1",
-    "puppeteer": "^25.11.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8"
   },

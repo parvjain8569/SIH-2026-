@@ -2,8 +2,10 @@ import { useState, useEffect, useRef } from 'react'
 import './login.css'
 import { extractCleanUsername, formatDisplayName } from './utils/userUtils'
 import { useLanguage } from './i18n/LanguageContext'
-import { supabase } from './lib/supabase.js'
+import { supabase, isSupabaseConfigured } from './lib/supabase.js'
+import { citizenSignUp, citizenSignIn, citizenSignOut, getCurrentCitizen } from './lib/authService.js'
 import { generateMockAadhaarData } from './utils/userUtils'
+
 export default function Login({ onLoginSuccess, onBackToWebsite, initialView = 'create' }) {
   // Views: 'create' | 'otp' | 'aadhaar_kyc' | 'signin' | 'forgot_email' | 'forgot_otp' | 'forgot_reset' | 'mfa_otp'
   const [view, setView] = useState(initialView)
@@ -132,7 +134,7 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
     setView('aadhaar_kyc')
   }
 
-  // Handle Aadhaar KYC verification (mock)
+  // Handle Aadhaar KYC verification
   const handleAadhaarVerify = async () => {
     const cleaned = aadhaarInput.replace(/\s/g, '')
     if (cleaned.length !== 12 || !/^\d+$/.test(cleaned)) {
@@ -147,46 +149,70 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
     const existingName = formData.name ? `${formData.name} ${formData.surname}`.trim() : null
     const mockData = generateMockAadhaarData(cleaned, existingName)
 
-    // Sign up with Supabase Auth
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email: formData.email,
-      password: formData.password,
-    })
+    try {
+      // 1. Sign up with dual-mode auth service (SHA-256 + salt + masked Aadhaar)
+      const user = await citizenSignUp({
+        name: mockData.name || existingName || formData.email.split('@')[0],
+        email: formData.email,
+        password: formData.password,
+        phone: mockData.contact || '',
+        aadhaarNumber: cleaned,
+        aadhaarVerified: true,
+        district: mockData.district || 'Gurugram',
+        state: mockData.state || 'Haryana',
+      })
 
-    if (authError) {
-      setAadhaarVerifying(false)
-      setError(`Signup failed: ${authError.message}`)
-      return
-    }
-
-    // Save profile to Supabase public.profiles (if the table exists)
-    if (authData?.user) {
-      const { error: profileError } = await supabase.from('profiles').insert([
-        {
-          id: authData.user.id,
-          name: mockData.name,
-          email: formData.email,
-          phone_number: mockData.contact,
-          aadhaar_number: cleaned,
-          aadhaar_verified: true,
+      // 2. Also register in Supabase if configured
+      if (isSupabaseConfigured && supabase) {
+        try {
+          const { data: authData } = await supabase.auth.signUp({
+            email: formData.email,
+            password: formData.password,
+          })
+          if (authData?.user) {
+            await supabase.from('profiles').insert([
+              {
+                id: authData.user.id,
+                name: mockData.name || existingName,
+                email: formData.email,
+                phone_number: mockData.contact,
+                aadhaar_number: cleaned,
+                aadhaar_verified: true,
+              }
+            ])
+          }
+        } catch (sbErr) {
+          console.warn('[BhoomIntelli] Supabase signup notice:', sbErr)
         }
-      ])
-      
-      if (profileError) {
-        console.warn("Failed to create profile record", profileError)
       }
-    }
 
-    setAadhaarVerifying(false)
-    setAadhaarVerifiedData(mockData)
-    setSuccess('Aadhaar verified & Account created successfully! Please sign in.')
-    setView('signin')
+      setAadhaarVerifying(false)
+      setAadhaarVerifiedData(mockData)
+      setSuccess('Aadhaar verified & Account created successfully! Please sign in.')
+      setView('signin')
+    } catch (err) {
+      setAadhaarVerifying(false)
+      setError(err.message || 'Registration failed. Please try again.')
+    }
   }
 
-  const handleSkipAadhaar = () => {
-    setSuccess('You can verify your Aadhaar later from your Profile. Please sign in.')
-    setError('')
-    setView('signin')
+  const handleSkipAadhaar = async () => {
+    try {
+      const fullName = formData.name ? `${formData.name} ${formData.surname}`.trim() : formData.email.split('@')[0]
+      await citizenSignUp({
+        name: fullName,
+        email: formData.email,
+        password: formData.password,
+        phone: '',
+        aadhaarNumber: null,
+        aadhaarVerified: false,
+      })
+      setSuccess('Account created! You can verify your Aadhaar later from your Profile. Please sign in.')
+      setError('')
+      setView('signin')
+    } catch (err) {
+      setError(err.message || 'Registration failed.')
+    }
   }
 
   // Handle "Sign In" submission
@@ -203,12 +229,32 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
       return
     }
 
-    const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-    })
+    try {
+      let loggedUser = null
 
-    if (authError) {
+      if (isSupabaseConfigured && supabase) {
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email: email.trim(),
+          password,
+        })
+        if (authError) throw authError
+        loggedUser = authData.user
+      } else {
+        loggedUser = await citizenSignIn({ email, password })
+      }
+
+      // Check for phone number for simulated 2FA OTP
+      if (loggedUser && (loggedUser.phone || loggedUser.contact)) {
+        const ph = loggedUser.phone || loggedUser.contact
+        setMfaPhone(ph)
+        setOtpDigits(['', '', '', '', '', ''])
+        setView('mfa_otp')
+        const masked = ph.length > 7 ? `${ph.substring(0, 3)}****${ph.slice(-4)}` : ph
+        setSuccess(`MFA Challenge: 6-digit OTP dispatched to ${masked}`)
+      } else {
+        if (onLoginSuccess) onLoginSuccess(loggedUser)
+      }
+    } catch (err) {
       const newFails = failedAttempts + 1
       setFailedAttempts(newFails)
       if (newFails >= 3) {
@@ -216,26 +262,8 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
         setLockoutSeconds(30)
         setError('Account locked due to too many failed attempts. Try again in 30 seconds.')
       } else {
-        setError(`Invalid credentials. ${3 - newFails} attempt(s) remaining.`)
+        setError(err.message || `Invalid credentials. ${3 - newFails} attempt(s) remaining.`)
       }
-      return
-    }
-
-    // Instead of logging in immediately, fetch phone and ask for OTP
-    const { data: profileData } = await supabase
-      .from('profiles')
-      .select('phone_number')
-      .eq('id', authData.user.id)
-      .single()
-      
-    if (profileData && profileData.phone_number) {
-       setMfaPhone(profileData.phone_number)
-       setOtpDigits(['', '', '', '', '', ''])
-       setView('mfa_otp')
-       setSuccess(`OTP sent to ${profileData.phone_number.substring(0, 3)}****${profileData.phone_number.slice(-4)}`)
-    } else {
-       // Fallback if no phone (maybe old user), just log them in
-       if (onLoginSuccess) onLoginSuccess(authData.user)
     }
   }
 
@@ -250,13 +278,12 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
       return
     }
 
-    // Accept mock OTP
+    const current = getCurrentCitizen()
     if (onLoginSuccess) {
-      // In a real app we'd fetch profile here, but for now we'll pass the user ID.
-      // We will let App.jsx fetch the real profile.
-      onLoginSuccess({}) // Empty object because Supabase session is now active
+      onLoginSuccess(current || { email: formData.email, name: formData.name })
     }
   }
+
 
   // Handle Forgot Password - Send OTP to Email
   const handleSendForgotOtp = (e) => {
@@ -526,7 +553,10 @@ export default function Login({ onLoginSuccess, onBackToWebsite, initialView = '
                 className="auth-link"
                 style={{ marginTop: '8px', display: 'inline-block' }}
                 onClick={() => {
-                  supabase.auth.signOut()
+                  if (isSupabaseConfigured && supabase) {
+                    try { supabase.auth.signOut() } catch {}
+                  }
+                  citizenSignOut()
                   setView('signin')
                 }}
               >

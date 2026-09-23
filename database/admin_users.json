@@ -1,0 +1,47 @@
+[
+  {
+    "id": "ADM-001",
+    "name": "Super Admin",
+    "email": "admin@bhoomintelli.in",
+    "salt": "8e1ef4b35d7296191c016a95c950f872",
+    "passwordHash": "583692550228ef46408998ca2bcd3c655b12814e4c92ed6938dd1aba2e7674b0",
+    "role": "Super Admin",
+    "department": "Land Records Division",
+    "district": "New Delhi",
+    "state": "Delhi",
+    "phone": "+91 98765 43210",
+    "status": "Active",
+    "createdAt": "2025-01-15T00:00:00.000Z",
+    "lastLogin": "2026-09-22T08:00:00.000Z"
+  },
+  {
+    "id": "ADM-002",
+    "name": "Sanjay Verma",
+    "email": "inspector@bhoomintelli.in",
+    "salt": "8ff774253a809ebdb5fefc2708c917a8",
+    "passwordHash": "220e2c4b4fcc18fddeb3b1d3460981dca0fbf616a6a4ef799fb97793c950470d",
+    "role": "Revenue Inspector",
+    "department": "Tehsil Cadastral Audit",
+    "district": "Gurugram",
+    "state": "Haryana",
+    "phone": "+91 98123 45678",
+    "status": "Active",
+    "createdAt": "2025-05-10T09:30:00.000Z",
+    "lastLogin": "2026-09-21T11:45:00.000Z"
+  },
+  {
+    "id": "ADM-003",
+    "name": "Anil Tehsildar",
+    "email": "tehsildar@bhoomintelli.in",
+    "salt": "2dc4ab934ffffe8962707c22ab57ecd3",
+    "passwordHash": "58ccb0bd5865d29fb0ce598047c0bd63f4308ee87f57bd9dba37e34761af9f22",
+    "role": "Tehsildar",
+    "department": "Tehsil Revenue Registry",
+    "district": "Gurugram",
+    "state": "Haryana",
+    "phone": "+91 98987 65432",
+    "status": "Active",
+    "createdAt": "2025-03-20T08:00:00.000Z",
+    "lastLogin": "2026-09-22T09:15:00.000Z"
+  }
+]

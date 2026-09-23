@@ -1,7 +1,8 @@
 # AI Developer Notes & Instructions — BhoomiIntelli Admin Portal
 
 > 🤖 **FOR AI ASSISTANTS**: Read this file first before making any code modifications to the Admin Portal!
-> Last Updated: 2026-09-19
+> Last Updated: 2026-09-22 (Full System Revisit: Dual-Mode Auth, SHA-256 Hashing, REC-28452 Registry Sync)
+
 
 ---
 

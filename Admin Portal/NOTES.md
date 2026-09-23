@@ -71,3 +71,15 @@
 | `src/pages/UsersPage.jsx` | Citizen & staff directory. Lists registered citizens, verification status (KYC Verified, Aadhaar Linked, Pending), role badges, and action controls to view submitted properties or suspend access. |
 | `src/pages/AnalyticsPage.jsx` | Data analytics suite. Displays state-wise record distribution (Haryana, Uttar Pradesh, Rajasthan, Gujarat, etc.), AI-OCR accuracy metrics, processing throughput charts, and CSV/PDF export tools. |
 | `src/pages/SettingsPage.jsx` | System configuration center. Allows updating administrative profile details, configuring OCR confidence thresholds (e.g. flag below 85%), managing digital signature keys, and inspecting system diagnostics. |
+
+---
+
+### Data Services & Authentication (`src/lib/`)
+
+| File | Purpose |
+| :--- | :--- |
+| `src/lib/adminAuthService.js` | Administrative authentication service. Features `adminSignIn` with Web Crypto SHA-256 salted password hashing, credential stripping (`salt` & `passwordHash` never exposed to client state), and dual-mode support (FastAPI backend on port 3001 `/api/auth/admin/login` or local encrypted admin store). Also exposes `fetchAllCitizenUsers()` for the citizen directory. |
+| `src/lib/recordService.js` | Land record data service. Dual-mode support for Supabase PostgreSQL (`land_records` table) and local JSON/FastAPI store (`/api/records`). Contains default mock records including Parv Jain (`REC-28452`), Ramesh Kumar (`REC-20391`), Sunita Devi (`REC-18776`), and Mahesh Yadav (`REC-17402`). |
+| `src/lib/supabase.js` | Supabase client initializer. Gracefully checks `isSupabaseConfigured` (`VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`), falling back to local offline mode when credentials are omitted. |
+| `src/lib/index.js` | Unified module export exporting all utilities from `adminAuthService.js`, `recordService.js`, and `supabase.js`. |
+

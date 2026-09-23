@@ -1,0 +1,28 @@
+# Dependencies
+node_modules/
+.venv/
+venv/
+env/
+
+# Build artifacts
+dist/
+build/
+
+# Bytecode & caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Local environment & secrets
+.env.local
+.env.*.local
+
+# Paddle models cache
+.paddleocr/
+.paddlex/
+
+# OS metadata
+.DS_Store
+Thumbs.db

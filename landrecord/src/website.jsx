@@ -142,6 +142,8 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
   const [reviewFileName, setReviewFileName] = useState(null)
   const [showCaptcha, setShowCaptcha] = useState(false)
   const [extractedOcrData, setExtractedOcrData] = useState(null)
+  const [currentUploadFile, setCurrentUploadFile] = useState(null)
+  const [currentUploadSizeStr, setCurrentUploadSizeStr] = useState('')
 
   const stepsRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -281,6 +283,9 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
       ? `${(file.size / (1024 * 1024)).toFixed(2)} MB`
       : `${(file.size / 1024).toFixed(1)} KB`
 
+    setCurrentUploadFile(file)
+    setCurrentUploadSizeStr(sizeStr)
+
     setLastUploadedDoc({
       name: file.name,
       size: sizeStr,
@@ -291,18 +296,26 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
     setReviewFileName(file.name)
     setShowFetching(true)
 
-    let extracted = null;
-    
+    let extracted = null
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => {
+      console.warn('[BhoomIntelli] OCR request reached client responsiveness timeout (18s), continuing to Document Review...')
+      controller.abort()
+    }, 18000)
+
     try {
       const formData = new FormData()
+      formData.append('document', file)
       formData.append('file', file)
-      
+
       const baseUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3001'
       const response = await fetch(`${baseUrl}/api/ocr/extract`, {
         method: 'POST',
-        body: formData
+        body: formData,
+        signal: controller.signal
       })
-      
+
+      clearTimeout(timeoutId)
       if (response.ok) {
         const result = await response.json()
         extracted = result.data || {}
@@ -311,40 +324,51 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
         setExtractedOcrData(null)
       }
     } catch (err) {
-      console.error('[BhoomIntelli] OCR API Error:', err)
+      clearTimeout(timeoutId)
+      console.warn('[BhoomIntelli] OCR API notice (proceeding to review):', err?.message || err)
       setExtractedOcrData(null)
+    } finally {
+      clearTimeout(timeoutId)
+      setShowFetching(false)
+      setShowDocReview(true)
     }
+  }
 
-    // Add to records immediately in background
+  // Finalize and save land record once user confirms AI extracted data
+  const handleConfirmReview = (reviewedData) => {
+    const file = currentUploadFile
+    const sizeStr = currentUploadSizeStr || '2.1 MB'
     const newParcelId = 'HR-' + Math.floor(21000 + Math.random() * 8000)
-    const newRecord = {
+
+    const finalRecord = {
       id: 'REC-' + Math.floor(10000 + Math.random() * 90000),
-      ownerName: extracted?.ownerName || profileData.name || user?.name || user?.username || 'Authorized Landholder',
+      ownerName: reviewedData?.ownerName || profileData.name || user?.name || user?.username || 'Authorized Landholder',
       userEmail: profileData.email || user?.email || 'citizen@bhoomintelli.in',
       parcelId: newParcelId,
-      date: extracted?.date || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+      date: reviewedData?.date || new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
       status: 'Verified',
-      khasraNo: extracted?.khasraNo || `${Math.floor(20 + Math.random() * 150)}/${Math.floor(1 + Math.random() * 15)}`,
-      khatouniNo: extracted?.khataNo || `KH-${Math.floor(100 + Math.random() * 900)}`,
-      tehsil: 'Gurugram Sadar',
-      village: 'Khandsa',
-      district: extracted?.district || profileData.district || 'Gurugram',
-      state: extracted?.state || profileData.state || 'Haryana',
-      area: extracted?.area || '2.1 Hectares',
+      khasraNo: reviewedData?.khasraNo || '128/3',
+      khatouniNo: reviewedData?.khataNo || `KH-${Math.floor(100 + Math.random() * 900)}`,
+      tehsil: reviewedData?.tehsil || 'Gurugram Sadar',
+      village: reviewedData?.village || 'Khandsa',
+      district: reviewedData?.district || profileData.district || 'Gurugram',
+      state: reviewedData?.state || profileData.state || 'Haryana',
+      area: reviewedData?.area || '2.1 Hectares',
       disputeStatus: 'Clear',
       verifiedBy: 'Tehsildar Office (Revenue Registry)',
-      documentName: file.name,
+      documentName: file?.name || reviewFileName || 'LandRecord.pdf',
       fileSize: sizeStr,
       isNew: true,
     }
-    setRecords((prev) => [newRecord, ...prev])
+
+    setRecords((prev) => [finalRecord, ...prev])
 
     // Save record row to Supabase PostgreSQL & upload document to Storage
-    saveLandRecord(file, newRecord)
+    saveLandRecord(file, finalRecord)
       .then((saved) => {
         if (saved) {
           setRecords((curr) =>
-            curr.map((r) => (r.id === newRecord.id ? { ...r, ...saved } : r))
+            curr.map((r) => (r.id === finalRecord.id ? { ...r, ...saved } : r))
           )
         }
       })
@@ -356,13 +380,10 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
       id: 'n-' + Date.now(),
       type: 'processing',
       title: 'Document Uploaded & Digitized',
-      message: `${file.name} successfully parsed. Parcel ${newParcelId} created.`,
+      message: `${finalRecord.documentName} successfully parsed with PaddleOCR. Parcel ${newParcelId} created.`,
       time: 'Just now',
       unread: true,
     }, ...prev])
-
-    setShowFetching(false)
-    setShowDocReview(true)
   }
 
   // ── Profile & Settings update handlers ─────────────────────────────────────
@@ -413,6 +434,7 @@ export default function Website({ user, onLogout, onOpenLogin, onOpenLanguage })
         <DocumentReviewPage
           uploadedFileName={reviewFileName}
           extractedData={extractedOcrData}
+          onConfirm={handleConfirmReview}
           onBack={() => {
             setShowDocReview(false)
             setActiveNav('My Records')

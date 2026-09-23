@@ -3,6 +3,31 @@ import { supabase, isSupabaseConfigured } from './supabase.js'
 // Default fallback demo records with upgraded fields
 export const DEFAULT_RECORDS = [
   {
+    id: 'REC-28452',
+    ownerName: 'Parv Jain',
+    userEmail: 'parv.jain@bhoomintelli.in',
+    parcelId: 'HR-40222',
+    date: '12 Sep 2026',
+    status: 'Under Review',
+    khasraNo: '128/3',
+    khatouniNo: 'KH-442',
+    tehsil: 'Gurugram Sadar',
+    village: 'Khandsa',
+    district: 'Gurugram',
+    state: 'Haryana',
+    area: '2.40 Hectares',
+    digitalHash: 'SHA256:7f4a2109bc834de1093f4389e1a2b3c4d5e6f7a8b9c0d1e2f3a98af42e617d98',
+    disputeStatus: 'Area Discrepancy (OCR 2.10 Ha vs Citizen 2.40 Ha)',
+    verifiedBy: 'Pending Audit',
+    documentName: 'deed_conveyance_parv.pdf',
+    boundaryCoordinates: [
+      { lat: 28.4520, lng: 77.0210 },
+      { lat: 28.4550, lng: 77.0240 },
+      { lat: 28.4510, lng: 77.0260 },
+      { lat: 28.4490, lng: 77.0225 },
+    ],
+  },
+  {
     id: 'REC-20391',
     ownerName: 'Ramesh Kumar',
     userEmail: 'ramesh.kumar@gov.in',

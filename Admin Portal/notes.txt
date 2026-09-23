@@ -38,3 +38,9 @@ Last Updated: 2026-09-19
 - UsersPage.jsx: Citizen directory, Aadhaar KYC verification status, access controls.
 - AnalyticsPage.jsx: Verification analytics, OCR accuracy statistics, state distribution.
 - SettingsPage.jsx: System settings, OCR confidence thresholds, admin profile.
+
+6. Data Services & Auth: src/lib/
+- adminAuthService.js: Admin sign in with SHA-256 + salt verification, citizen directory fetcher.
+- recordService.js: Land records retrieval & persistence (Supabase PostgreSQL / JSON fallback), contains REC-28452.
+- supabase.js: Client initializer with graceful offline fallback.
+- index.js: Central exports for lib modules.

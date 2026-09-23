@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import Login from './login.jsx'
 import Website from './website.jsx'
 import LanguageSelectModal from './components/modals/LanguageSelectModal.jsx'
-import { supabase } from './lib/supabase.js'
+import { supabase, isSupabaseConfigured } from './lib/supabase.js'
+import { getCurrentCitizen, citizenSignOut } from './lib/authService.js'
 import './login.css'
 import './App.css'
 
@@ -44,26 +45,45 @@ export default function App() {
       return
     }
 
-    // Check active session on load
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) fetchUserProfile(session.user)
-      else setCurrentUser(null)
-    })
+    if (isSupabaseConfigured && supabase) {
+      // Check active session on load
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) fetchUserProfile(session.user)
+        else {
+          const localUser = getCurrentCitizen()
+          setCurrentUser(localUser)
+        }
+      }).catch(() => {
+        const localUser = getCurrentCitizen()
+        setCurrentUser(localUser)
+      })
 
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        fetchUserProfile(session.user)
-      } else {
-        setCurrentUser(null)
-      }
-    })
+      // Listen for auth changes
+      const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user) {
+          fetchUserProfile(session.user)
+        } else {
+          const localUser = getCurrentCitizen()
+          setCurrentUser(localUser)
+        }
+      })
 
-    return () => subscription.unsubscribe()
+      return () => subscription.unsubscribe()
+    } else {
+      // Local / Offline / FastAPI backend session
+      const localUser = getCurrentCitizen()
+      setCurrentUser(localUser)
+    }
   }, [devMode])
 
   const fetchUserProfile = async (user) => {
     try {
+      if (!isSupabaseConfigured || !supabase) {
+        const localUser = getCurrentCitizen()
+        setCurrentUser(localUser || { email: user.email, name: user.name || user.email })
+        return
+      }
+
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
@@ -72,8 +92,9 @@ export default function App() {
       
       if (error) {
         console.warn("Could not fetch profile:", error)
-        // Fallback to basic user data
-        setCurrentUser({ email: user.email, name: user.email })
+        // Fallback to basic user data or local user
+        const localUser = getCurrentCitizen()
+        setCurrentUser(localUser || { email: user.email, name: user.email })
         return
       }
 
@@ -93,6 +114,8 @@ export default function App() {
       })
     } catch (err) {
       console.error(err)
+      const localUser = getCurrentCitizen()
+      setCurrentUser(localUser)
     }
   }
 
@@ -108,15 +131,24 @@ export default function App() {
     setCurrentPage('auth')
   }
 
-  const handleLoginSuccess = () => {
-    // We don't need to manually set user here; onAuthStateChange will catch it!
+  const handleLoginSuccess = (user) => {
+    if (user && user.email) {
+      setCurrentUser(user)
+    } else {
+      const localUser = getCurrentCitizen()
+      if (localUser) setCurrentUser(localUser)
+    }
     setCurrentPage('website')
   }
 
   const handleLogout = async () => {
-    if (!devMode) {
-      await supabase.auth.signOut()
+    if (isSupabaseConfigured && supabase) {
+      try {
+        await supabase.auth.signOut()
+      } catch {}
     }
+    citizenSignOut()
+    setCurrentUser(null)
     setCurrentPage('website')
     if (devMode) {
       setDevMode(false)
@@ -124,6 +156,7 @@ export default function App() {
       window.dispatchEvent(new Event('devModeChange'))
     }
   }
+
 
   return (
     <div className="app-root">

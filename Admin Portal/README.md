@@ -139,12 +139,18 @@ Admin Portal/
     ├── AdminDashboard.jsx      # Sidebar navigation & Topbar shell
     ├── components/
     │   └── RecordAuditStudio.jsx # 1/3 : 1/3 : 1/3 Tri-Pane verification engine
+    ├── lib/
+    │   ├── adminAuthService.js # Admin auth with SHA-256 salted hash & citizen directory
+    │   ├── recordService.js    # Dual-mode land records service (Supabase / JSON store)
+    │   ├── supabase.js         # Supabase client with offline fallback
+    │   └── index.js            # Unified export entry point
     └── pages/
         ├── DashboardHome.jsx   # Analytics cards, metrics & audit feed
         ├── RecordsPage.jsx     # Records table, filter tabs & audit launcher
         ├── UsersPage.jsx       # Citizen management & role permissions
         ├── AnalyticsPage.jsx   # Metrics, trend charts & report generator
         └── SettingsPage.jsx    # System preferences & admin profile
+
 ```
 
 ---

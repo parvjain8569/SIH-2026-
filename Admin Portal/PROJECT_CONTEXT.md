@@ -75,6 +75,12 @@ Admin Portal/
     ├── components/
     │   └── RecordAuditStudio.jsx # 3-column verification split view (1/3 : 1/3 : 1/3)
     │
+    ├── lib/
+    │   ├── adminAuthService.js  # Administrative auth service with SHA-256 + salt verification
+    │   ├── recordService.js     # Land records data layer (Supabase / local store with REC-28452)
+    │   ├── supabase.js          # Supabase client with offline fallback
+    │   └── index.js             # Central library export
+    │
     └── pages/
         ├── DashboardHome.jsx    # Metric cards, quick actions, recent audit activity feed
         ├── RecordsPage.jsx      # Records table, search, category filter pills & audit trigger
@@ -82,6 +88,7 @@ Admin Portal/
         ├── AnalyticsPage.jsx    # Verification throughput, state-wise volume & export reports
         └── SettingsPage.jsx     # Admin profile, security keys & system diagnostics
 ```
+
 
 ---
 

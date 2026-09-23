@@ -27,7 +27,9 @@ To ensure the Admin Portal installs and runs identically on your teammates' mach
   - `main.jsx`, `App.jsx`, `index.css`, `admin.css`
   - `AdminLogin.jsx`, `AdminDashboard.jsx`
   - `components/RecordAuditStudio.jsx` (Tri-Pane Audit Studio)
+  - `lib/` (`adminAuthService.js`, `recordService.js`, `supabase.js`, `index.js`)
   - `pages/` (`DashboardHome.jsx`, `RecordsPage.jsx`, `UsersPage.jsx`, `AnalyticsPage.jsx`, `SettingsPage.jsx`)
+
 
 ---
 

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
+import { adminSignIn } from './lib/adminAuthService.js'
 
-// Demo admin credentials
+// Default administrative demo email
 const ADMIN_EMAIL = 'admin@bhoomintelli.in'
 const ADMIN_PASSWORD = 'Admin@123'
 
@@ -46,7 +47,7 @@ export default function AdminLogin({ onLoginSuccess, devMode }) {
     return () => clearTimeout(lockoutTimer.current)
   }, [isLockedOut, lockoutSeconds])
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
 
@@ -59,37 +60,23 @@ export default function AdminLogin({ onLoginSuccess, devMode }) {
 
     setLoading(true)
 
-    // Simulate network delay
-    setTimeout(() => {
-      setLoading(false)
+    try {
+      const admin = await adminSignIn({ email, password })
+      onLoginSuccess(admin)
+    } catch (err) {
+      const newAttempts = failedAttempts + 1
+      setFailedAttempts(newAttempts)
 
-      const normalizedEmail = email.trim().toLowerCase()
-      const normalizedPassword = password.trim()
-
-      if (normalizedEmail === ADMIN_EMAIL.toLowerCase() && normalizedPassword === ADMIN_PASSWORD) {
-        // Success!
-        onLoginSuccess({
-          name: 'Admin',
-          email: ADMIN_EMAIL,
-          role: 'Super Admin',
-          phone: '+91 98765 43210',
-          department: 'Land Records Division',
-          joinDate: '15 Jan 2025',
-        })
+      if (newAttempts >= 3) {
+        setIsLockedOut(true)
+        setLockoutSeconds(30)
+        setError('')
       } else {
-        // Failed
-        const newAttempts = failedAttempts + 1
-        setFailedAttempts(newAttempts)
-
-        if (newAttempts >= 3) {
-          setIsLockedOut(true)
-          setLockoutSeconds(30)
-          setError('')
-        } else {
-          setError(`Invalid credentials. ${3 - newAttempts} attempt${3 - newAttempts === 1 ? '' : 's'} remaining.`)
-        }
+        setError(err.message || `Invalid credentials. ${3 - newAttempts} attempt${3 - newAttempts === 1 ? '' : 's'} remaining.`)
       }
-    }, 600)
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
